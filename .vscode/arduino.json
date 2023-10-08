@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:uno",
+    "port": "COM3",
+    "programmer": "arduinoasispatmega32u4",
+    "sketch": "Assignement#01-TT\\assignement-01.ino"
+}
