@@ -1,6 +1,0 @@
-{
-    "port": "/dev/tty.usbmodem114201",
-    "board": "arduino:avr:uno",
-    "programmer": "arduinoasispatmega32u4",
-    "sketch": "assignement-01.ino"
-}
