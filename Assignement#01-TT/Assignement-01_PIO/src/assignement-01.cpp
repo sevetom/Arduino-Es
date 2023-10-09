@@ -17,6 +17,7 @@
 #define POTENTIOMETER A0
 #define FADE 5
 #define UNDEFINED -1
+#define DELAY 1000
 
 typedef struct {
     int buttonPin;
@@ -34,6 +35,7 @@ typedef enum {
 
 volatile gameState state;
 buttonLed buttonLedArr[SIZE];
+int nButtonPressed;
 
 void loop();
 void redFade(int fadeAmount);
@@ -90,7 +92,6 @@ void redFade(int fadeAmount) {
         noInterrupts();
         tmp = state;
         interrupts();
-        delay(30);
     }
     analogWrite(REDLED, 0);
 }
@@ -102,29 +103,32 @@ void buttonPressed() {
     if (state == waitingPlayer) {
         for (int i = 0; i < SIZE; i++) {
             if (digitalRead(buttonLedArr[i].buttonPin) == HIGH) {
-                Serial.print("Button ");
-                Serial.print(i);
-                Serial.println(" pressed");
-                digitalWrite(buttonLedArr[i].ledPin, HIGH);
-                delay(50);
+                if(buttonLedArr[i].ledPin == HIGH) {
+                    return;
+                }
+                if (buttonLedArr[i].turn == nButtonPressed) {
+                    nButtonPressed++;
+                    digitalWrite(buttonLedArr[i].ledPin, HIGH);
+                    return;
+                }
             }
         }
     }
+    delay(30);
 }
 
 void startLeds() {
     Serial.println("Starting Leds");
     turnOnGreens();
-    delay(1000);
     int arr[SIZE];
     for (int i = 0; i < SIZE; i++) {
         arr[i] = UNDEFINED;
     }
     for (int i=0; i<SIZE; i++) {
+        delay(DELAY);
         arr[i] = randomLedOrder(arr);
         digitalWrite(buttonLedArr[arr[i]].ledPin, LOW);
         buttonLedArr[arr[i]].turn = i;
-        delay(1000);
     }
     state = waitingPlayer;
 }
@@ -155,6 +159,7 @@ bool isPresent(int *arr, int num) {
 }
 
 void playerTurn() {
-    Serial.println("Player Turn");
-
+    nButtonPressed = 0;
+    while (nButtonPressed < SIZE) {}
+    Serial.println("Player Turn Ended");
 }
