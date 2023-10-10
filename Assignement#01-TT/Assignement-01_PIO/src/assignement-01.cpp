@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <TimerOne.h>
+#include <avr/sleep.h>
 
 #define SIZE 4
 #define REDLED 6
@@ -29,24 +31,26 @@ typedef enum {
     starting,
     waitingLed,
     waitingPlayer,
-    ended,
+    lost,
     sleeping
 } gameState;
 
 volatile gameState state;
 buttonLed buttonLedArr[SIZE];
-int nButtonPressed;
+volatile int currentTurn;
 
 void loop();
 void redFade(int fadeAmount);
 void buttonPressed();
+void losingCase();
 void startLeds();
+void switchGreens(bool state);
 int randomLedOrder(int *arr);
 bool isPresent(int *arr, int num);
-void playerTurn();
 
 void setup() {
     state = starting;
+    currentTurn = 0;
     srand(time(NULL));
     buttonLedArr[0] = { BUTTON1, GREENLED1, UNDEFINED };
     buttonLedArr[1] = { BUTTON2, GREENLED2, UNDEFINED };
@@ -58,6 +62,8 @@ void setup() {
         pinMode(buttonLedArr[i].ledPin, OUTPUT);
     }
     pinMode(REDLED, OUTPUT);
+    Timer1.initialize(15000000);
+    Timer1.attachInterrupt(sleep);
     Serial.begin(115200);
 }
 
@@ -70,9 +76,11 @@ void loop() {
             startLeds();
             break;
         case waitingPlayer:
-            playerTurn();
             break;
-        case ended:
+        case lost:
+            Serial.println("You lost");
+            losingCase();
+            state = starting;
             break;
         case sleeping:
             break;
@@ -92,6 +100,7 @@ void redFade(int fadeAmount) {
         noInterrupts();
         tmp = state;
         interrupts();
+        delay(30);
     }
     analogWrite(REDLED, 0);
 }
@@ -102,24 +111,35 @@ void buttonPressed() {
     }
     if (state == waitingPlayer) {
         for (int i = 0; i < SIZE; i++) {
-            if (digitalRead(buttonLedArr[i].buttonPin) == HIGH) {
-                if(buttonLedArr[i].ledPin == HIGH) {
-                    return;
-                }
-                if (buttonLedArr[i].turn == nButtonPressed) {
-                    nButtonPressed++;
+            if (digitalRead(buttonLedArr[i].buttonPin) == HIGH && digitalRead(buttonLedArr[i].ledPin == LOW)) {
+                if (buttonLedArr[i].turn == currentTurn) {
+                    currentTurn--;
                     digitalWrite(buttonLedArr[i].ledPin, HIGH);
-                    return;
+                    if (currentTurn == UNDEFINED) {
+                        state = waitingLed;
+                    }
+                } else {
+                    state = lost;
                 }
             }
         }
     }
-    delay(30);
+    delay(500);
+}
+
+void losingCase() {
+    switchGreens(false);
+    for (int i = 0; i < SIZE; i++) {
+        buttonLedArr[i].turn = UNDEFINED;
+    }
+    digitalWrite(REDLED, HIGH);
+    delay(1000);
+    digitalWrite(REDLED, LOW);
+    delay(10000);
 }
 
 void startLeds() {
-    Serial.println("Starting Leds");
-    turnOnGreens();
+    switchGreens(true);
     int arr[SIZE];
     for (int i = 0; i < SIZE; i++) {
         arr[i] = UNDEFINED;
@@ -130,12 +150,13 @@ void startLeds() {
         digitalWrite(buttonLedArr[arr[i]].ledPin, LOW);
         buttonLedArr[arr[i]].turn = i;
     }
+    currentTurn = SIZE-1;
     state = waitingPlayer;
 }
 
-void turnOnGreens() {
+void switchGreens(bool state) {
     for (int i = 0; i < SIZE; i++) {
-        digitalWrite(buttonLedArr[i].ledPin, HIGH);
+        digitalWrite(buttonLedArr[i].ledPin, state ? HIGH : LOW);
     }
 }
 
@@ -143,8 +164,6 @@ int randomLedOrder(int *arr) {
     int randomNumber = rand() % 4;
     while (isPresent(arr, randomNumber)) {
         randomNumber = rand() % 4;
-        Serial.print("Random number is ");
-        Serial.println(randomNumber);
     }
     return randomNumber;
 }
@@ -158,8 +177,21 @@ bool isPresent(int *arr, int num) {
     return false;
 }
 
-void playerTurn() {
-    nButtonPressed = 0;
-    while (nButtonPressed < SIZE) {}
-    Serial.println("Player Turn Ended");
+void sleep() {
+    Serial.println("Mi Mi Mi");
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_enable();
+    for (int i = 0;i < SIZE; i++) {
+        enableInterrupt(buttonLedArr[i].buttonPin, wakeUp, CHANGE);
+    }
+    sleep_mode();
+    sleep_disable();
+    for (int i = 0;i < SIZE; i++) {
+        enableInterrupt(buttonLedArr[i].buttonPin, buttonPressed, CHANGE);
+    }
+    Serial.println("Waking up");
+}
+
+void wakeUp() {
+    state = starting;
 }
