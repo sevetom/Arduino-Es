@@ -42,23 +42,28 @@ int score;
 float potentiometerValue;
 int t1, t2, t3;
 
+void setup();
 void loop();
-void redFade(int fadeAmount);
+void setState(gameState newState);
+void waitingStart(int fadeAmount);
 void buttonPressed();
 void losingCase();
 void startLeds();
 void switchGreens(bool state);
 int randomLedOrder(int *arr);
 bool isPresent(int *arr, int num);
-void setT();
+void setTimes();
+int randomInt(float min, float max);
+void wakeUp();
 
 void setup() {
     Serial.begin(115200);
     state = starting;
     currentTurn = 0;
     score = 0;
+    // potentiometerValue = analogRead(POTENTIOMETER);
     potentiometerValue = 1.0;
-    setT();
+    setTimes();
     srand(time(NULL));
     buttonLedArr[0] = { BUTTON1, GREENLED1, UNDEFINED };
     buttonLedArr[1] = { BUTTON2, GREENLED2, UNDEFINED };
@@ -75,9 +80,10 @@ void setup() {
 }
 
 void loop() {
+    // potentiometerValue = analogRead(POTENTIOMETER);
     switch (state) {
         case starting:
-            redFade(FADE);
+            waitingStart(FADE);
             break;
         case waitingLed:
             startLeds();
@@ -87,14 +93,20 @@ void loop() {
         case lost:
             Serial.println("You lost");
             losingCase();
-            state = starting;
+            setState(starting);
             break;
         case sleeping:
             break;
     }
 }
 
-void redFade(int fadeAmount) {
+void setState(gameState newState) {
+    noInterrupts();
+    state = newState;
+    interrupts();
+}
+
+void waitingStart(int fadeAmount) {
     Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
     int brightness = 0;
     gameState tmp = starting;
@@ -113,12 +125,12 @@ void redFade(int fadeAmount) {
 }
 
 void buttonPressed() {
+    noInterrupts();
     if (state == starting && digitalRead(BUTTON1) == HIGH) {
         state = waitingLed;
     }
     if (state == waitingPlayer) {
         for (int i = 0; i < SIZE; i++) {
-            noInterrupts();
             if (digitalRead(buttonLedArr[i].buttonPin) == HIGH && buttonLedArr[i].turn != UNDEFINED) {
                 if (buttonLedArr[i].turn == currentTurn) {
                     currentTurn--;
@@ -129,17 +141,17 @@ void buttonPressed() {
                         Serial.print("New point! Score: ");
                         Serial.println(score);
                         potentiometerValue = potentiometerValue * 0.9;
-                        setT();
+                        setTimes();
                         state = waitingLed;
                     }
                 } else {
                     state = lost;
                 }
+                break;
             }
-            interrupts();
-            break;
         }
     }
+    interrupts();
     delay(500);
 }
 
@@ -167,12 +179,7 @@ void startLeds() {
         buttonLedArr[arr[i]].turn = i;
     }
     currentTurn = SIZE-1;
-    state = waitingPlayer;
-    for (int i = 0; i<SIZE; i++){
-        Serial.print(arr[i]);
-        Serial.print(" ");
-    }
-    Serial.println("");
+    setState(waitingPlayer);
 }
 
 void switchGreens(bool state) {
@@ -203,36 +210,26 @@ void sleep() {
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
     for (int i = 0;i < SIZE; i++) {
-        disableInterrupt(buttonLedArr[i].buttonPin);
-        pinMode(buttonLedArr[i].buttonPin, INPUT);
         enableInterrupt(buttonLedArr[i].buttonPin, wakeUp, CHANGE);
     }
     sleep_mode();
     sleep_disable();
     for (int i = 0;i < SIZE; i++) {
-        disableInterrupt(buttonLedArr[i].buttonPin);
-        pinMode(buttonLedArr[i].buttonPin, INPUT);
         enableInterrupt(buttonLedArr[i].buttonPin, buttonPressed, CHANGE);
     }
     Serial.println("Waking up");
 }
 
 void wakeUp() {
-    state = starting;
+    setState(starting);
 }
 
 int randomInt(float min, float max) {
     return (int)(min + (max - min) * (float)rand() / (float)RAND_MAX);
 }
 
-void setT() {
+void setTimes() {
     t1 = (int)randomInt((float)1000*potentiometerValue, (float)3000*potentiometerValue); // time to start the game
     t2 = (int)randomInt((float)3000*potentiometerValue, (float)5000*potentiometerValue); // time to turn on the leds
     t3 = (int)randomInt((float)4000*potentiometerValue, (float)6000*potentiometerValue); // time to wait for the player
-    Serial.print("t1: ");
-    Serial.print(t1);
-    Serial.print(" | t2: ");
-    Serial.print(t2);
-    Serial.print(" | t3: ");
-    Serial.println(t3);
 }
