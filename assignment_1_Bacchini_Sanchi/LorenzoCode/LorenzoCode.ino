@@ -87,7 +87,10 @@ void loop() {
     tmp++;
   	Serial.print("Welcome to the Restore the Light Game. Press Key B1 to Start");
   }
-  if(gameStart==false && tmp==10){digitalWrite(led_pins[0],HIGH);}
+  if(gameStart==false && tmp==10){
+    //SLEEP
+    digitalWrite(led_pins[0],HIGH);
+  }
   if(digitalRead(buttons_pins[0])==HIGH && gameStart==false){gameStart=true;}
   if(gameStart==true){
   	//Sequenza Casuale Led
