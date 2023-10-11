@@ -25,6 +25,7 @@ void test(){
 }
 
 void setup() {
+  Serial.begin(9600);
   for (int i = 0; i < N_LEDS; i++){
     pinMode(led_pins[i],OUTPUT);
   }
@@ -38,7 +39,6 @@ void setup() {
 
 void dissolvenzaStatusLed(){
   for(int i=0; i<255;i++){
-   	//Serial.print("Welcome to the Restore the Light Game. Press Key B1 to Start");
    	analogWrite(status_pin, brightness); // imposta la luminosità
    	brightness = brightness + fadeAmount; // cambia la luminosità attraverso il loop  
    	delay(1);
@@ -82,7 +82,11 @@ void sleepNow()         // here we put the arduino to sleep
 void loop() {
   int speed = analogRead(A0);
   float factor = ((float)speed)/1024;
-  if(gameStart==false && tmp<10){dissolvenzaStatusLed();tmp++;}
+  if(gameStart==false && tmp<10){
+    dissolvenzaStatusLed();
+    tmp++;
+  	Serial.print("Welcome to the Restore the Light Game. Press Key B1 to Start");
+  }
   if(gameStart==false && tmp==10){digitalWrite(led_pins[0],HIGH);}
   if(digitalRead(buttons_pins[0])==HIGH && gameStart==false){gameStart=true;}
   if(gameStart==true){
