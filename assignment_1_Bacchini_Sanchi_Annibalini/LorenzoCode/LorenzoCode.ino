@@ -1,5 +1,9 @@
+#include <avr/sleep.h>
+#include <avr/power.h>
+
 #define N_LEDS 4
 #define N_BUTTONS 4
+
 
 int led_pins[N_LEDS] = { 3, 4, 5, 6};
 int buttons_pins[N_BUTTONS] = {8,9,10,11};
@@ -67,17 +71,17 @@ void allOff(){
   digitalWrite(status_pin,LOW);
 }
 
-/*
+
 void sleepNow()         // here we put the arduino to sleep
 {
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);   // sleep mode is set here
-    sleep_enable();          // enables the sleep bit in the mcucr registe
-    attachInterrupt(0,2, LOW); // use interrupt 0 (pin 2) and run function
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+	sleep_enable();
 	sleep_mode();
+	// back
 	sleep_disable();
-	detachInterrupt(0);
+	//power_all_enable();
 }
-*/
+
 
 void loop() {
   int speed = analogRead(A0);
@@ -90,6 +94,7 @@ void loop() {
   if(gameStart==false && tmp==10){
     //SLEEP
     digitalWrite(led_pins[0],HIGH);
+    sleepNow();
   }
   if(digitalRead(buttons_pins[0])==HIGH && gameStart==false){gameStart=true;}
   if(gameStart==true){
