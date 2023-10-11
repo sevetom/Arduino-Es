@@ -28,8 +28,10 @@ int t3;
 int brightness;
 int fadeAmount;
 unsigned long prevoiusTime;
+int led;
 
 void setup() { 
+  //inizialize serial monitor, leds and buttons
   Serial.begin(9600);
   pinMode(LED_PIN1, OUTPUT);
   pinMode(LED_PIN2, OUTPUT);
@@ -40,40 +42,46 @@ void setup() {
   pinMode(BUTTON_PIN3, INPUT);
   pinMode(BUTTON_PIN4, INPUT);
   pinMode(LED_ERRORPIN, OUTPUT);
-  score = 0;
+  //initialize variables for game states
   inGame = false;
   endGame = false;
   outGame = true; 
+  //initialize variables for timing and gloabl counters
+  score = 0;
   i = 0;
   t2 = 4000;
   t3 = 5000;
   brightness = 10;
   fadeAmount = 5;
   prevoiusTime = 0;
+  led = 0;
+  
   randomSeed(analogRead(4));
+  //attached interrupts on buttons
   enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
   enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
   enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
   enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
+  //create and start timers
   Timer1.initialize(t3*1000000);
   Timer1.attachInterrupt(goToEndGame);
 }
 
 void loop() {
-  //digitalWrite(LED_PIN1, HIGH);
   if (outGame) {
     //genero sequenza random
-    randomizeOrder();
-    //accendo tutti i led
-    digitalWrite(LED_PIN1, HIGH);
-    digitalWrite(LED_PIN2, HIGH);
-    digitalWrite(LED_PIN3, HIGH);
-    digitalWrite(LED_PIN4, HIGH);
-    dissolvenzaStatusLed();
+    if(led == 0) {
+      randomizeOrder();
+      //accendo tutti i led
+      digitalWrite(LED_PIN1, HIGH);
+      digitalWrite(LED_PIN2, HIGH);
+      digitalWrite(LED_PIN3, HIGH);
+      digitalWrite(LED_PIN4, HIGH);
+      dissolvenzaStatusLed();
+    }
     //spengo in base all'ordine randomizzato
-    delay(1500);
-    int led = 0;
-    for (led = 0; led < N_LED; led++) {
+    //delay(1500);
+    if(led < 4){
       int current = turnedOffOrder[led];
       switch(current) {
         case 1:
@@ -90,15 +98,18 @@ void loop() {
           break;
       }
       delay(t2 / N_LED);
+      led++;
+    } else {
+      //parte timer
+      outGame = false;
+      inGame = true;
     }
-    //parte timer
-    outGame = false;
-    inGame = true;
   } else {
     if (endGame) {
       //mostro led rosso
       dissolvenzaStatusLed();
       //mostro punteggio
+      Serial.println(score);
       //leggo valore potenziometro
       factor = analogRead(POT_PIN);
       factor = map(factor, 0, 1023, 0, 4);
