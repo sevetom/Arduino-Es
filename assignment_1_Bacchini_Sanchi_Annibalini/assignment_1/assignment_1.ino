@@ -109,6 +109,7 @@ void loop() {
       //mostro led rosso
       dissolvenzaStatusLed();
       //mostro punteggio
+      Serial.println(score);
       //leggo valore potenziometro
       factor = analogRead(POT_PIN);
       factor = map(factor, 0, 1023, 0, 4);
