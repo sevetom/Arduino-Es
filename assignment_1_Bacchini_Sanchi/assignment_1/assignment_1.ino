@@ -11,6 +11,7 @@
 #define T1 3000
 #define T_OUT 10000
 #define N_LED 4
+#define BRIGHTNESS 255
 #include <EnableInterrupt.h>
 
 int score;
@@ -23,6 +24,8 @@ int i;
 int factor;
 int t2;
 int t3;
+int brightness;
+int fadeAmount;
 
 void setup() { 
   Serial.begin(9600);
@@ -42,6 +45,8 @@ void setup() {
   i = 0;
   t2 = 4000;
   t3 = 5000;
+  brightness = 10;
+  fadeAmount = 5;
   randomSeed(analogRead(4));
   enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
   enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
@@ -51,7 +56,6 @@ void setup() {
 
 void loop() {
   //digitalWrite(LED_PIN1, HIGH);
-  
   if (outGame) {
     //genero sequenza random
     randomizeOrder();
@@ -60,6 +64,7 @@ void loop() {
     digitalWrite(LED_PIN2, HIGH);
     digitalWrite(LED_PIN3, HIGH);
     digitalWrite(LED_PIN4, HIGH);
+    dissolvenzaStatusLed();
     //spengo in base all'ordine randomizzato
     delay(1500);
     int led = 0;
@@ -87,7 +92,7 @@ void loop() {
   } else {
     if (endGame) {
       //mostro led rosso
-      digitalWrite(LED_ERRORPIN, HIGH);
+      dissolvenzaStatusLed();
       //mostro punteggio
       //leggo valore potenziometro
       factor = analogRead(POT_PIN);
@@ -151,4 +156,19 @@ void randomizeOrder() {
   Serial.println(turnedOffOrder[1]);
   Serial.println(turnedOffOrder[2]);
   Serial.println(turnedOffOrder[3]);
+}
+
+void dissolvenzaStatusLed(){
+  for(int i=0; i<255;i++){
+   	analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
+   	brightness = brightness + fadeAmount; // cambia la luminosità attraverso il loop  
+   	delay(1);
+  }
+  for(int i=0; i<255;i++){
+   	//Serial.print("Welcome to the Restore the Light Game. Press Key B1 to Start");
+   	analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
+   	brightness = brightness - fadeAmount; // cambia la luminosità attraverso il loop  
+   	delay(1);
+  }
+  delay(490);
 }
