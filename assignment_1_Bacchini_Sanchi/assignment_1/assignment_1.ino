@@ -11,6 +11,7 @@
 #define T1 3000
 #define T_OUT 10000
 #define N_LED 4
+#include <EnableInterrupt.h>
 
 int score;
 bool inGame;
@@ -29,6 +30,10 @@ void setup() {
   pinMode(LED_PIN2, OUTPUT);
   pinMode(LED_PIN3, OUTPUT);
   pinMode(LED_PIN4, OUTPUT);
+  pinMode(BUTTON_PIN1, INPUT);
+  pinMode(BUTTON_PIN2, INPUT);
+  pinMode(BUTTON_PIN3, INPUT);
+  pinMode(BUTTON_PIN4, INPUT);
   pinMode(LED_ERRORPIN, OUTPUT);
   score = 0;
   inGame = false;
@@ -38,10 +43,10 @@ void setup() {
   t2 = 4000;
   t3 = 5000;
   randomSeed(analogRead(4));
-  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN1), button1pressed, FALLING); 
-  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN2), button2pressed, FALLING); 
-  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN3), button3pressed, FALLING); 
-  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN4), button4pressed, FALLING); 
+  enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
+  enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
+  enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
+  enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
 }
 
 void loop() {
