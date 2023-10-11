@@ -54,6 +54,7 @@ void setState(gameState newState);
 void waitingStart(int fadeAmount);
 void buttonPressed();
 void startGame();
+void timeOut();
 void restart();
 void startLeds();
 void switchGreens(bool state);
@@ -86,7 +87,7 @@ void setup() {
         pinMode(buttonLedArr[i].ledPin, OUTPUT);
     }
     pinMode(REDLED, OUTPUT);
-    Timer1.initialize();
+    Timer1.initialize(1000000);
     Timer1.stop();
 }
 
@@ -119,7 +120,6 @@ void waitingStart(int fadeAmount) {
     Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
     Timer1.setPeriod(SLEEP_TIMER);
     Timer1.attachInterrupt(sleep);
-    Timer1.start();
     int brightness = 0;
     float tmpPotentiometerValue = 0;
     gameState tmp = starting;
@@ -147,11 +147,18 @@ void waitingStart(int fadeAmount) {
 
 }
 
-void buttonPressed() {
-    noInterrupts();
+bool avoidBounces() {
     long ts = millis();
     if (ts - prevts > 40) {
         prevts = ts;
+        return true;
+    }
+    return false;
+}
+
+void buttonPressed() {
+    noInterrupts();
+    if (avoidBounces()) {
         if (state == starting && digitalRead(BUTTON1) == HIGH) {
             state = waitingLed;
         }
@@ -166,6 +173,8 @@ void buttonPressed() {
                             score+=difficulty+1;
                             Serial.print("New point! Score: ");
                             Serial.println(score);
+                            Timer1.stop();
+                            Timer1.detachInterrupt();
                             setTimes();
                             state = waitingLed;
                         }
@@ -183,7 +192,6 @@ void buttonPressed() {
 void startGame() {
     Timer1.setPeriod(t3 * 1000000);
     Timer1.attachInterrupt(timeOut);
-    Timer1.start();
 }
 
 void timeOut() {
@@ -219,6 +227,7 @@ void startLeds() {
     }
     currentTurn = SIZE-1;
     setState(waitingPlayer);
+    startGame();
 }
 
 void switchGreens(bool state) {
@@ -268,7 +277,10 @@ void sleep() {
 }
 
 void wakeUp() {
-    setState(starting);
+    if (avoidBounces()) {
+        Serial.println("WAKING UP...");
+        setState(starting);
+    }
 }
 
 int randomInt(int min, int max) {
