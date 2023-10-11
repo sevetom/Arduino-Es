@@ -31,6 +31,7 @@ unsigned long prevoiusTime;
 int led;
 
 void setup() { 
+  //inizialize serial monitor, leds and buttons
   Serial.begin(9600);
   pinMode(LED_PIN1, OUTPUT);
   pinMode(LED_PIN2, OUTPUT);
@@ -41,10 +42,12 @@ void setup() {
   pinMode(BUTTON_PIN3, INPUT);
   pinMode(BUTTON_PIN4, INPUT);
   pinMode(LED_ERRORPIN, OUTPUT);
-  score = 0;
+  //initialize variables for game states
   inGame = false;
   endGame = false;
   outGame = true; 
+  //initialize variables for timing and gloabl counters
+  score = 0;
   i = 0;
   t2 = 4000;
   t3 = 5000;
@@ -52,11 +55,14 @@ void setup() {
   fadeAmount = 5;
   prevoiusTime = 0;
   led = 0;
+  
   randomSeed(analogRead(4));
+  //attached interrupts on buttons
   enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
   enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
   enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
   enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
+  //create and start timers
   Timer1.initialize(t3*1000000);
   Timer1.attachInterrupt(goToEndGame);
 }
