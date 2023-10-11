@@ -76,6 +76,7 @@ void loop() {
       }
       delay(t2 / N_LED);
     }
+    //parte timer
     outGame = false;
     inGame = true;
   } else {
@@ -136,7 +137,6 @@ void randomizeOrder() {
   int i = 1;
   while(i <= N_LED) {
     int choise = random(0, N_LED);
-    choise = choise % 4;
     if (turnedOffOrder[choise] == 0){
       turnedOffOrder[choise] = i;
       i++;
