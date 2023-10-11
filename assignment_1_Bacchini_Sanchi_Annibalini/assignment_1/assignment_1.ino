@@ -1,3 +1,5 @@
+#include <EnableInterrupt.h>
+#include <TimerOne.h>
 #define LED_PIN1 13
 #define LED_PIN2 12
 #define LED_PIN3 11
@@ -12,9 +14,6 @@
 #define T_OUT 10000
 #define N_LED 4
 #define BRIGHTNESS 255
-#include <EnableInterrupt.h>
-
-#include <EnableInterrupt.h>
 
 int score;
 bool inGame;
@@ -28,6 +27,7 @@ int t2;
 int t3;
 int brightness;
 int fadeAmount;
+unsigned long prevoiusTime;
 
 void setup() { 
   Serial.begin(9600);
@@ -49,11 +49,14 @@ void setup() {
   t3 = 5000;
   brightness = 10;
   fadeAmount = 5;
+  prevoiusTime = 0;
   randomSeed(analogRead(4));
   enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
   enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
   enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
   enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
+  Timer1.initialize(t3*1000000);
+  Timer1.attachInterrupt(goToEndGame);
 }
 
 void loop() {
@@ -142,7 +145,11 @@ void button4pressed() {
 }
 
 void checkButton(int n) {
-  pressedOrder[i] = n;
+  if(millis() - prevoiusTime > 300) {
+    pressedOrder[i] = n;
+    Serial.println(pressedOrder[i]);
+    prevoiusTime = millis();
+  }
 }
 
 void randomizeOrder() {
@@ -173,4 +180,12 @@ void dissolvenzaStatusLed(){
    	delay(1);
   }
   delay(490);
+}
+
+void goToEndGame() {
+  endGame = true;
+  inGame = false;
+  outGame = false;
+  Serial.println("fine");
+  Timer1.restart();
 }
