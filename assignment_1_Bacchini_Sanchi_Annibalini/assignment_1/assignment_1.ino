@@ -14,6 +14,8 @@
 #define BRIGHTNESS 255
 #include <EnableInterrupt.h>
 
+#include <EnableInterrupt.h>
+
 int score;
 bool inGame;
 bool endGame;
