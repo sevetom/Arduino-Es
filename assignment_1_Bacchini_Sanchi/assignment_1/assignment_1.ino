@@ -25,6 +25,11 @@ int t3;
 
 void setup() { 
   Serial.begin(9600);
+  pinMode(LED_PIN1, OUTPUT);
+  pinMode(LED_PIN2, OUTPUT);
+  pinMode(LED_PIN3, OUTPUT);
+  pinMode(LED_PIN4, OUTPUT);
+  pinMode(LED_ERRORPIN, OUTPUT);
   score = 0;
   inGame = false;
   endGame = false;
@@ -32,15 +37,16 @@ void setup() {
   i = 0;
   t2 = 4000;
   t3 = 5000;
+  randomSeed(analogRead(4));
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN1), button1pressed, FALLING); 
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN2), button2pressed, FALLING); 
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN3), button3pressed, FALLING); 
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN4), button4pressed, FALLING); 
-
-
 }
 
 void loop() {
+  //digitalWrite(LED_PIN1, HIGH);
+  
   if (outGame) {
     //genero sequenza random
     randomizeOrder();
@@ -50,6 +56,7 @@ void loop() {
     digitalWrite(LED_PIN3, HIGH);
     digitalWrite(LED_PIN4, HIGH);
     //spengo in base all'ordine randomizzato
+    delay(1500);
     int led = 0;
     for (led = 0; led < N_LED; led++) {
       int current = turnedOffOrder[led];
@@ -74,6 +81,7 @@ void loop() {
   } else {
     if (endGame) {
       //mostro led rosso
+      digitalWrite(LED_ERRORPIN, HIGH);
       //mostro punteggio
       //leggo valore potenziometro
       factor = analogRead(POT_PIN);
@@ -82,6 +90,7 @@ void loop() {
       delay(T_OUT);
       endGame = false;
       outGame = true;
+      digitalWrite(LED_ERRORPIN, LOW);
     } else {
       if (inGame) {
         //controlla length array
@@ -101,7 +110,6 @@ void loop() {
       }
     }
   }
-    
 }
 
 void button1pressed() {
@@ -128,6 +136,7 @@ void randomizeOrder() {
   int i = 1;
   while(i <= N_LED) {
     int choise = random(0, N_LED);
+    choise = choise % 4;
     if (turnedOffOrder[choise] == 0){
       turnedOffOrder[choise] = i;
       i++;
