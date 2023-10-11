@@ -1,5 +1,5 @@
 #define LED_PIN1 13
-#define LEDP_IN2 12
+#define LED_PIN2 12
 #define LED_PIN3 11
 #define LED_PIN4 10
 #define LED_ERRORPIN 9
@@ -10,12 +10,13 @@
 #define POT_PIN A0
 #define T1 3000
 #define T_OUT 10000
+#define N_LED 4
 
 int score;
 bool inGame;
 bool endGame;
 bool outGame;
-int turnedOffOrder[4];
+int turnedOffOrder[4] = {0, 0, 0, 0};
 int pressedOrder[4] = {0, 0, 0, 0};
 int i;
 int factor;
@@ -41,7 +42,33 @@ void setup() {
 
 void loop() {
   if (outGame) {
-    //mostra led
+    //genero sequenza random
+    randomizeOrder();
+    //accendo tutti i led
+    digitalWrite(LED_PIN1, HIGH);
+    digitalWrite(LED_PIN2, HIGH);
+    digitalWrite(LED_PIN3, HIGH);
+    digitalWrite(LED_PIN4, HIGH);
+    //spengo in base all'ordine randomizzato
+    int led = 0;
+    for (led = 0; led < N_LED; led++) {
+      int current = turnedOffOrder[led];
+      switch(current) {
+        case 1:
+          digitalWrite(LED_PIN1, LOW);
+          break;
+        case 2:
+          digitalWrite(LED_PIN2, LOW);
+          break;
+        case 3:
+          digitalWrite(LED_PIN3, LOW);
+          break;
+        case 4:
+          digitalWrite(LED_PIN4, LOW);
+          break;
+      }
+      delay(t2 / N_LED);
+    }
     outGame = false;
     inGame = true;
   } else {
@@ -60,7 +87,7 @@ void loop() {
         //controlla length array
         if (pressedOrder[3] != 0) {
           //stoppa timer
-          for(int x = 0; x < 4; x++) {
+          for(int x = 0; x < N_LED ; x++) {
             if(pressedOrder[x] != turnedOffOrder[3-x]) {
               endGame = true;
             }
@@ -95,4 +122,19 @@ void button4pressed() {
 
 void checkButton(int n) {
   pressedOrder[i] = n;
+}
+
+void randomizeOrder() {
+  int i = 1;
+  while(i <= N_LED) {
+    int choise = random(0, N_LED);
+    if (turnedOffOrder[choise] == 0){
+      turnedOffOrder[choise] = i;
+      i++;
+    }
+  }
+  Serial.println(turnedOffOrder[0]);
+  Serial.println(turnedOffOrder[1]);
+  Serial.println(turnedOffOrder[2]);
+  Serial.println(turnedOffOrder[3]);
 }
