@@ -20,7 +20,7 @@
 #define FADE 5
 #define UNDEFINED -1
 #define DELAY 1000
-#define SLEEP_TIMER 20 * 1000000
+#define SLEEP_TIMER 10 * 1000000
 // This are not standard potentiometer values but 
 // the one we are using is really poor quality
 #define POT_MIN 23
@@ -53,7 +53,8 @@ void loop();
 void setState(gameState newState);
 void waitingStart(int fadeAmount);
 void buttonPressed();
-void losingCase();
+void startGame();
+void restart();
 void startLeds();
 void switchGreens(bool state);
 int randomLedOrder(int *arr);
@@ -85,8 +86,8 @@ void setup() {
         pinMode(buttonLedArr[i].ledPin, OUTPUT);
     }
     pinMode(REDLED, OUTPUT);
-    Timer1.initialize(SLEEP_TIMER);
-    Timer1.attachInterrupt(sleep);
+    Timer1.initialize();
+    Timer1.stop();
 }
 
 void loop() {
@@ -101,8 +102,7 @@ void loop() {
             break;
         case lost:
             Serial.println("You lost");
-            losingCase();
-            setState(starting);
+            restart();
             break;
         case sleeping:
             break;
@@ -117,6 +117,9 @@ void setState(gameState newState) {
 
 void waitingStart(int fadeAmount) {
     Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
+    Timer1.setPeriod(SLEEP_TIMER);
+    Timer1.attachInterrupt(sleep);
+    Timer1.start();
     int brightness = 0;
     float tmpPotentiometerValue = 0;
     gameState tmp = starting;
@@ -133,6 +136,8 @@ void waitingStart(int fadeAmount) {
         delay(30);
     }
     analogWrite(REDLED, 0);
+    Timer1.stop();
+    Timer1.detachInterrupt();
     noInterrupts();
     difficulty = 1 - (tmpPotentiometerValue/10);
     setTimes();
@@ -175,13 +180,27 @@ void buttonPressed() {
     }
 }
 
-void losingCase() {
+void startGame() {
+    Timer1.setPeriod(t3 * 1000000);
+    Timer1.attachInterrupt(timeOut);
+    Timer1.start();
+}
+
+void timeOut() {
+    setState(lost);
+}
+
+void restart() {
     score = 0;
     switchGreens(false);
+    generateTimes();
+    Timer1.stop();
+    Timer1.detachInterrupt();
     digitalWrite(REDLED, HIGH);
     delay(1000);
     digitalWrite(REDLED, LOW);
     delay(10000);
+    setState(starting);
 }
 
 void startLeds() {
