@@ -12,6 +12,8 @@
 #define T_OUT 10000
 #define N_LED 4
 
+#include <EnableInterrupt.h>
+
 int score;
 bool inGame;
 bool endGame;
