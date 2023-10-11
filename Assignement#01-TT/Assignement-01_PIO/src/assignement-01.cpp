@@ -43,8 +43,8 @@ typedef enum {
 volatile gameState state;
 buttonLed buttonLedArr[SIZE];
 volatile int currentTurn;
-int score;
-volatile float potentiometerValue;
+float score;
+volatile float difficulty;
 int t1, t2, t3;
 volatile long prevts;
 
@@ -72,7 +72,7 @@ void setup() {
     currentTurn = 0;
     score = 0;
     prevts = 0;
-    potentiometerValue = 0;
+    difficulty = 1;
     generateTimes();
     srand(analogRead(0));
     buttonLedArr[0] = { BUTTON1, GREENLED1, UNDEFINED };
@@ -85,8 +85,8 @@ void setup() {
         pinMode(buttonLedArr[i].ledPin, OUTPUT);
     }
     pinMode(REDLED, OUTPUT);
-    // Timer1.initialize(SLEEP_TIMER);
-    // Timer1.attachInterrupt(sleep);
+    Timer1.initialize(SLEEP_TIMER);
+    Timer1.attachInterrupt(sleep);
 }
 
 void loop() {
@@ -118,9 +118,10 @@ void setState(gameState newState) {
 void waitingStart(int fadeAmount) {
     Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
     int brightness = 0;
+    float tmpPotentiometerValue = 0;
     gameState tmp = starting;
     while (tmp == starting) {
-        potentiometerValue = map(analogRead(POTENTIOMETER), POT_MIN, POT_MAX, 1, 4);
+        tmpPotentiometerValue = map(analogRead(POTENTIOMETER), POT_MIN, POT_MAX, 1, 4);
         analogWrite(REDLED, brightness);
         brightness = brightness + fadeAmount;
         if (brightness == 0 || brightness == 255) {
@@ -132,8 +133,13 @@ void waitingStart(int fadeAmount) {
         delay(30);
     }
     analogWrite(REDLED, 0);
+    noInterrupts();
+    difficulty = 1 - (tmpPotentiometerValue/10);
+    setTimes();
+    interrupts();
     Serial.print("Difficolta': ");
-    Serial.println(potentiometerValue);
+    Serial.println(difficulty);
+
 }
 
 void buttonPressed() {
@@ -152,7 +158,7 @@ void buttonPressed() {
                         buttonLedArr[i].turn = UNDEFINED;
                         digitalWrite(buttonLedArr[i].ledPin, HIGH);
                         if (currentTurn < 0) {
-                            score++;
+                            score+=difficulty+1;
                             Serial.print("New point! Score: ");
                             Serial.println(score);
                             setTimes();
@@ -255,13 +261,19 @@ float randomFloat(float min, float max) {
 }
 
 void generateTimes() {
-    t1 = (int)randomFloat(((float)1000)*potentiometerValue, ((float)3000)*potentiometerValue); // time to start the game
-    t2 = (int)randomFloat(((float)3000)*potentiometerValue, ((float)5000)*potentiometerValue); // time to turn on the leds
-    t3 = (int)randomFloat(((float)4000)*potentiometerValue, ((float)6000)*potentiometerValue); // time to wait for the player
+    t1 = (int)randomFloat(((float)1000), ((float)3000)); // time to start the game
+    t2 = (int)randomFloat(((float)4000), ((float)6000)); // time to turn on the leds
+    t3 = (int)randomFloat(((float)5000), ((float)7000)); // time to wait for the player
 }
 
 void setTimes() {
-    t1 *= potentiometerValue;
-    t2 *= potentiometerValue;
-    t3 *= potentiometerValue;
+    t1 *= difficulty;
+    t2 *= difficulty;
+    t3 *= difficulty;
+    Serial.print("t1: ");
+    Serial.print(t1);
+    Serial.print(" | t2: ");
+    Serial.print(t2);
+    Serial.print(" | t3: ");
+    Serial.println(t3);
 }
