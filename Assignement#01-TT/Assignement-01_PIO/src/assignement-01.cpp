@@ -1,3 +1,10 @@
+/**
+ * @author tommaso.severi2@studio.unibo.it
+ * @author tommaso.ceredi@studio.unibo.it
+ * @brief Restore the lights minigame
+ * @version 1.0
+ */
+
 // Standard arduino library
 #include <Arduino.h>
 // Standard C libraries
@@ -11,7 +18,7 @@
 // Needed to put arduino to sleep
 #include <avr/sleep.h>
 
-// Number of buttons and leds used
+// Number of buttons and leds couples used
 #define COUPLES 4
 // Pin for the red led
 #define REDLED 6
@@ -47,6 +54,9 @@
     the one we are using is of really poor quality */
 #define POT_MIN 23
 #define POT_MAX 1001
+// Levels of difficulty of the game
+#define MIN_DIFF 1
+#define MAX_DIFF 4
 
 /**
  * This struct couples all the buttons with their respective leds. 
@@ -102,6 +112,11 @@ void setTimerOne(unsigned long time, void (*f)());
  * Resets the timer one.
 */
 void resetTimerOne();
+
+/**
+ * Restarts the timer one. 
+ */
+void restartTimerOne(unsigned long time, void (*f)());
 
 /**
  * Waits for the player to press the button to start the game.
@@ -208,9 +223,9 @@ void setup() {
     currentTurn = 0;
     score = 0;
     prevts = 0;
-    difficulty = 1;
+    difficulty = MIN_DIFF;
     generateTimes();
-    srand(analogRead(0));
+    srand(micros());
     buttonLedArr[0] = { BUTTON1, GREENLED1, UNDEFINED };
     buttonLedArr[1] = { BUTTON2, GREENLED2, UNDEFINED };
     buttonLedArr[2] = { BUTTON3, GREENLED3, UNDEFINED };
@@ -260,14 +275,28 @@ void resetTimerOne() {
     Timer1.detachInterrupt();
 }
 
+void restartTimerOne(unsigned long time, void (*f)()) {
+    resetTimerOne();
+    setTimerOne(time, f);
+}
+
 void waitingStart(int fadeAmount) {
     Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
     setTimerOne(SLEEP_TIMER, sleep);
     int brightness = 0;
-    float tmpPotentiometerValue = 0;
+    float potVal = 0;
+    float prevPotVal = map(analogRead(POTENTIOMETER), POT_MIN, POT_MAX, MIN_DIFF, MAX_DIFF);
     gameState tmp = starting;
     while (tmp == starting) {
-        tmpPotentiometerValue = map(analogRead(POTENTIOMETER), POT_MIN, POT_MAX, 1, 4);
+        potVal = map(analogRead(POTENTIOMETER), POT_MIN, POT_MAX, MIN_DIFF, MAX_DIFF);
+        if (potVal != prevPotVal) {
+            restartTimerOne(SLEEP_TIMER, sleep);
+            prevPotVal = potVal;
+            Serial.print("reset");
+        }
+        Serial.print(potVal);
+        Serial.print(" ");
+        Serial.println(prevPotVal);
         analogWrite(REDLED, brightness);
         brightness = brightness + fadeAmount;
         if (brightness == 0 || brightness == 255) {
@@ -276,12 +305,12 @@ void waitingStart(int fadeAmount) {
         noInterrupts();
         tmp = state;
         interrupts();
-        delay(30);
+        delay(1000);
     }
     analogWrite(REDLED, 0);
     resetTimerOne();
     noInterrupts();
-    difficulty = 1 - (tmpPotentiometerValue/10);
+    difficulty = 1 - (potVal/10);
     setTimes();
     interrupts();
 
