@@ -162,6 +162,7 @@ void button4pressed() {
   checkButton(4);
 }
 
+//function to check the butttons rebound
 void checkButton(int n) {
   if(millis() - prevoiusTime > 300) {
     pressedOrder[i] = n;
@@ -170,6 +171,7 @@ void checkButton(int n) {
   }
 }
 
+//function to generate a random order to turning off the leds
 void randomizeOrder() {
   int i = 1;
   while(i <= N_LED) {
