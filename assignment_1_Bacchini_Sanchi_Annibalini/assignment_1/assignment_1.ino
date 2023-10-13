@@ -71,9 +71,11 @@ void setup() {
 }
 
 void loop() {
+  Serial.println(TImer1);
   if (outGame) {
     //genero sequenza random
     if(led == 0) {
+      Serial.println("devo spegnere i led");
       randomizeOrder();
       //accendo tutti i led
       digitalWrite(LED_PIN1, HIGH);
@@ -104,7 +106,7 @@ void loop() {
       led++;
     } else {
       //parte timer
-      Timer1.restart();
+      Timer1.start();
       outGame = false;
       inGame = true;
     }
@@ -118,9 +120,14 @@ void loop() {
       factor = analogRead(POT_PIN);
       factor = map(factor, 0, 1023, 0, 4);
       //aspetta 10 sec
-      delay(T_OUT);
+      //delay(T_OUT);
       endGame = false;
       outGame = true;
+      led = 0;
+      turnedOffOrder[0] = 0;
+      turnedOffOrder[1] = 0;
+      turnedOffOrder[2] = 0;
+      turnedOffOrder[3] = 0;
       digitalWrite(LED_ERRORPIN, LOW);
     } else {
       if (inGame) {
@@ -138,6 +145,11 @@ void loop() {
             //diminuisco tempi per difficoltà
             t2 = t2 - DIFF;
             t3 = t3 - DIFF;
+            //predispongo array per il prossimo livello
+            pressedOrder[0] = 0;
+            pressedOrder[1] = 0;
+            pressedOrder[2] = 0;
+            pressedOrder[3] = 0;
           }
           outGame = true;
         }
@@ -180,6 +192,7 @@ void randomizeOrder() {
       turnedOffOrder[choise] = i;
       i++;
     }
+    //Serial.print("A");
   }
   Serial.println(turnedOffOrder[0]);
   Serial.println(turnedOffOrder[1]);
