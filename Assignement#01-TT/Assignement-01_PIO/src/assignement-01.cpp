@@ -104,6 +104,16 @@ void loop();
 void setState(gameState newState);
 
 /**
+ * Attaches a function to the buttons' interrupt.
+*/
+void enableButtonsInterrupt(interruptFunctionType function);
+
+/**
+ * Disables the buttons' interrupt.
+*/
+void disableButtonsInterrupt();
+
+/**
  * Sets the timer one to call the function f after time microseconds.
 */
 void setTimerOne(unsigned long time, void (*f)());
@@ -232,7 +242,6 @@ void setup() {
     buttonLedArr[3] = { BUTTON4, GREENLED4, UNDEFINED };
     for (int i = 0; i < COUPLES; i++) {
         pinMode(buttonLedArr[i].buttonPin, INPUT);
-        enableInterrupt(buttonLedArr[i].buttonPin, buttonPressed, RISING);
         pinMode(buttonLedArr[i].ledPin, OUTPUT);
     }
     pinMode(REDLED, OUTPUT);
@@ -265,14 +274,26 @@ void setState(gameState newState) {
     interrupts();
 }
 
+void enableButtonsInterrupt(interruptFunctionType function) {
+    for (int i = 0; i < COUPLES; i++) {
+        enableInterrupt(buttonLedArr[i].buttonPin, function, RISING);
+    }
+}
+
+void disableButtonsInterrupt() {
+    for (int i = 0; i < COUPLES; i++) {
+        disableInterrupt(buttonLedArr[i].buttonPin);
+    }
+}
+
 void setTimerOne(unsigned long time, void (*f)()) {
     Timer1.setPeriod(time);
     Timer1.attachInterrupt(f);
 }
 
 void resetTimerOne() {
-    Timer1.stop();
     Timer1.detachInterrupt();
+    Timer1.stop();
 }
 
 void restartTimerOne(unsigned long time, void (*f)()) {
@@ -282,6 +303,7 @@ void restartTimerOne(unsigned long time, void (*f)()) {
 
 void waitingStart(int fadeAmount) {
     Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
+    enableInterrupt(buttonLedArr[0].buttonPin, startGame, RISING);
     setTimerOne(SLEEP_TIMER, sleep);
     int brightness = 0;
     float potVal = 0;
@@ -292,11 +314,7 @@ void waitingStart(int fadeAmount) {
         if (potVal != prevPotVal) {
             restartTimerOne(SLEEP_TIMER, sleep);
             prevPotVal = potVal;
-            Serial.print("reset");
         }
-        Serial.print(potVal);
-        Serial.print(" ");
-        Serial.println(prevPotVal);
         analogWrite(REDLED, brightness);
         brightness = brightness + fadeAmount;
         if (brightness == 0 || brightness == 255) {
@@ -317,7 +335,7 @@ void waitingStart(int fadeAmount) {
 }
 
 void startGame() {
-    setTimerOne(times[2] * 1000000, timeOut);
+    setState(showingOrder);
 }
 
 void timeOut() {
@@ -326,6 +344,7 @@ void timeOut() {
 
 void restart() {
     score = 0;
+    disableButtonsInterrupt();
     switchOff();
     generateTimes();
     resetTimerOne();
@@ -350,6 +369,8 @@ void startTurningOffLeds() {
         buttonLedArr[arr[i]].turn = i;
     }
     currentTurn = COUPLES-1;
+    setTimerOne(times[2] * 1000000, timeOut);
+    enableButtonsInterrupt(buttonPressed);
     setState(waitingPlayer);
 }
 
@@ -358,32 +379,27 @@ void buttonPressed() {
     long ts = millis();
     if (ts - prevts > 40) {
         prevts = ts;
-        if (state == starting && digitalRead(BUTTON1) == HIGH) {
-            state = showingOrder;
-        }
-        if (state == waitingPlayer) {
-            for (int i = 0; i < COUPLES; i++) {
-                if (digitalRead(buttonLedArr[i].buttonPin) == HIGH && buttonLedArr[i].turn != UNDEFINED) {
-                    if (buttonLedArr[i].turn == currentTurn) {
-                        currentTurn--;
-                        buttonLedArr[i].turn = UNDEFINED;
-                        digitalWrite(buttonLedArr[i].ledPin, HIGH);
-                        if (currentTurn < 0) {
-                            score+=difficulty+1;
-                            Serial.print("New point! Score: ");
-                            Serial.println(score);
-                            setTimes();
-                            state = showingOrder;
-                        }
-                    } else {
-                        state = madeMistake;
+        for (int i = 0; i < COUPLES; i++) {
+            if (digitalRead(buttonLedArr[i].buttonPin) == HIGH && buttonLedArr[i].turn != UNDEFINED) {
+                if (buttonLedArr[i].turn == currentTurn) {
+                    currentTurn--;
+                    buttonLedArr[i].turn = UNDEFINED;
+                    digitalWrite(buttonLedArr[i].ledPin, HIGH);
+                    if (currentTurn < 0) {
+                        score+=difficulty+1;
+                        Serial.print("New point! Score: ");
+                        Serial.println(score);
+                        setTimes();
+                        state = showingOrder;
                     }
-                    break;
+                } else {
+                    timeOut();
                 }
+                break;
             }
         }
-        interrupts();
     }
+    interrupts();
 }
 
 void switchGreens(bool state) {
@@ -442,16 +458,13 @@ void sleep() {
     setState(sleeping);
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
-    for (int i = 0;i < COUPLES; i++) {
-        enableInterrupt(buttonLedArr[i].buttonPin, wakeUp, RISING);
-    }
+    enableButtonsInterrupt(wakeUp);
     sleep_mode();
     sleep_disable();
-    for (int i = 0;i < COUPLES; i++) {
-        enableInterrupt(buttonLedArr[i].buttonPin, buttonPressed, RISING);
-    }
+    enableButtonsInterrupt(buttonPressed);
 }
 
 void wakeUp() {
     setState(starting);
+    delay(DELAY);
 }
