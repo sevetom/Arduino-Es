@@ -12,6 +12,7 @@
 #define POT_PIN A0
 #define T1 3000
 #define T_OUT 10000
+#define DIFF 500
 #define N_LED 4
 #define BRIGHTNESS 255
 
@@ -42,6 +43,7 @@ void setup() {
   pinMode(BUTTON_PIN3, INPUT);
   pinMode(BUTTON_PIN4, INPUT);
   pinMode(LED_ERRORPIN, OUTPUT);
+  pinMode(POT_PIN, INPUT);
   //initialize variables for game states
   inGame = false;
   endGame = false;
@@ -63,8 +65,9 @@ void setup() {
   enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
   enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
   //create and start timers
-  Timer1.initialize(t3*1000000);
+  Timer1.initialize(t3*1000); //first time is 5000*1000 = 5*10^6 microseconds
   Timer1.attachInterrupt(goToEndGame);
+  Timer1.stop();
 }
 
 void loop() {
@@ -101,6 +104,7 @@ void loop() {
       led++;
     } else {
       //parte timer
+      Timer1.restart();
       outGame = false;
       inGame = true;
     }
@@ -123,6 +127,7 @@ void loop() {
         //controlla length array
         if (pressedOrder[3] != 0) {
           //stoppa timer
+          Timer1.stop();
           for(int x = 0; x < N_LED ; x++) {
             if(pressedOrder[x] != turnedOffOrder[3-x]) {
               endGame = true;
@@ -131,6 +136,8 @@ void loop() {
           if(!endGame) {
             score++;
             //diminuisco tempi per difficoltà
+            t2 = t2 - DIFF;
+            t3 = t3 - DIFF;
           }
           outGame = true;
         }
@@ -198,5 +205,5 @@ void goToEndGame() {
   inGame = false;
   outGame = false;
   Serial.println("fine");
-  Timer1.restart();
+  Timer1.stop();
 }
