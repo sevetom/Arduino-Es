@@ -34,22 +34,25 @@
 #define BUTTON4 2
 // Pin for the potentiometer
 #define POTENTIOMETER A0
-// How many moments it's needed to take track of time
+/* How many variables that are needed to take track of time
+    in the differents parts of the game */
 #define TIMERS 3
-// Minum time given fro an action
+// Minum time given fro an action (milliseconds)
 #define MIN_TIME 1000
-// Maximum time given for an action
+// Maximum time given for an action (milliseconds)
 #define MAX_TIME 3000
-// The difference in time from one action to the next
+// The difference in time from one action to the next (milliseconds)
 #define TIME_INCREASE 2000
 // Quantity for how much the led shifts in light while fading
 #define FADE 5
 // Simbolic for variables waiting to have a valid number assigned
 #define UNDEFINED -1
-// Frequently used value when waiting
+// Frequently used value when waiting (milliseconds)
 #define DELAY 1000
-// Time before going to sleep
-#define SLEEP_TIMER 10 * 1000000
+// Time before going to sleep (microseconds)
+#define SLEEP_TIME 10 * 1000000
+// Time before getting another try (milliseconds)
+#define MISTAKE_TIME 10 * 1000
 /* This are not standard potentiometer values but
     the one we are using is of really poor quality */
 #define POT_MIN 23
@@ -57,8 +60,6 @@
 // Levels of difficulty of the game
 #define MIN_DIFF 1
 #define MAX_DIFF 4
-// Time before getting another try
-#define MISTAKE_TIME DELAY*10
 
 /**
  * This struct couples all the buttons with their respective leds. 
@@ -104,10 +105,11 @@ void loop();
  * Sets the state of the game.
  * @param newState the new state the game should assume.
 */
-void setState(gameState newState);
+void setConcurrentState(gameState newState);
 
 /**
  * Attaches a function to the buttons' interrupt.
+ * @param function the function to be attached.
 */
 void enableButtonsInterrupt(interruptFunctionType function);
 
@@ -118,6 +120,8 @@ void disableButtonsInterrupt();
 
 /**
  * Sets the timer one to call the function f after time microseconds.
+ * @param time the time in microseconds.
+ * @param f the function to be called.
 */
 void setTimerOne(unsigned long time, void (*f)());
 
@@ -128,8 +132,20 @@ void resetTimerOne();
 
 /**
  * Restarts the timer one. 
+ * @param time the time in microseconds.
+ * @param f the function to be called.
  */
 void restartTimerOne(unsigned long time, void (*f)());
+
+/**
+ * Checks if enough time has passed since the last button press.
+*/
+bool avoidButtonsBouncing();
+
+/**
+ * Handles the setting up of the game.
+*/
+void setupStart();
 
 /**
  * Waits for the player to press the button to start the game.
@@ -157,9 +173,25 @@ void restart();
 void startTurningOffLeds();
 
 /**
+ * Sets up everything needed to turn off the leds in order.
+*/
+int* setupTurningOffLeds(); 
+
+/**
+ * Generates a random order for the leds.
+ * @param arr the array maintaining each led turn.
+*/
+int randomLedOrder(int *arr);
+
+/**
  * Handles the button presses.
 */
 void buttonPressed();
+
+/**
+ * Handles the correct guesses of the player.
+*/
+void correctGuess(int index);
 
 /**
  * Switches on or off all the green leds.
@@ -171,12 +203,6 @@ void switchGreens(bool state);
  * Switches every led off.
 */
 void switchOff();
-
-/**
- * Generates a random order for the leds.
- * @param arr the array maintaining each led turn.
-*/
-int randomLedOrder(int *arr);
 
 /**
  * Generates a random integer between min and max.
@@ -206,7 +232,7 @@ void generateTimes();
  * Sets the times for the game descreasing them 
  * basing on the difficulty level.
 */
-void setTimes();
+void reduceTimes();
 
 /**
  * Gets the arduino to sleep.
@@ -218,31 +244,30 @@ void sleep();
 */
 void wakeUp();
 
-void setUpStart();
-
 // The state the game is currently in
 volatile gameState state;
 // The led that should be lit next while playing
 volatile int currentTurn;
-// Difficulty factor
-volatile float difficulty;
 // Used to maintain the current time to avoid buttons bouncing
 volatile long prevts;
 buttonLed buttonLedArr[COUPLES];
 float score;
+float difficulty;
+// Used to maintain the potentiometer value
 int potVal;
+// Used to maintain the brightness of the red led
 int brightness;
+// Used to maintain the amount of light the red led is shifting
 int fadeAmount;
 
 void setup() {
-    Serial.begin(115200);
     state = settingUp;
     currentTurn = 0;
     score = 0;
     prevts = 0;
     difficulty = MIN_DIFF;
-    generateTimes();
     srand(micros());
+    generateTimes();
     buttonLedArr[0] = { BUTTON1, GREENLED1, UNDEFINED };
     buttonLedArr[1] = { BUTTON2, GREENLED2, UNDEFINED };
     buttonLedArr[2] = { BUTTON3, GREENLED3, UNDEFINED };
@@ -252,12 +277,13 @@ void setup() {
         pinMode(buttonLedArr[i].ledPin, OUTPUT);
     }
     pinMode(REDLED, OUTPUT);
+    Serial.begin(115200);
 }
 
 void loop() {
     switch (state) {
         case settingUp:
-            setUpStart();
+            setupStart();
             break;
         case starting:
             waitingStart();
@@ -268,7 +294,6 @@ void loop() {
         case waitingPlayer:
             break;
         case madeMistake:
-            Serial.println("You lost");
             restart();
             break;
         case sleeping:
@@ -276,7 +301,7 @@ void loop() {
     }
 }
 
-void setState(gameState newState) {
+void setConcurrentState(gameState newState) {
     noInterrupts();
     state = newState;
     interrupts();
@@ -310,20 +335,29 @@ void restartTimerOne(unsigned long time, void (*f)()) {
     setTimerOne(time, f);
 }
 
-void setUpStart() {
+bool avoidButtonsBouncing() {
+    long ts = millis();
+    if (ts - prevts > 40) {
+        prevts = ts;
+        return true;
+    }
+    return false;
+}
+
+void setupStart() {
     potVal = 0;
     brightness = 0;
     fadeAmount = FADE;
     Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
     enableInterrupt(buttonLedArr[0].buttonPin, startGame, RISING);
-    setTimerOne(SLEEP_TIMER, sleep);
-    setState(starting);
+    setTimerOne(SLEEP_TIME, sleep);
+    state = starting;
 }
 
 void waitingStart() {
     int tmpPotVal = map(analogRead(POTENTIOMETER), POT_MIN, POT_MAX, MIN_DIFF, MAX_DIFF);
     if (potVal != tmpPotVal) {
-        restartTimerOne(SLEEP_TIMER, sleep);
+        restartTimerOne(SLEEP_TIME, sleep);
         potVal = tmpPotVal;
     }
     analogWrite(REDLED, brightness);
@@ -335,19 +369,21 @@ void waitingStart() {
 }
 
 void startGame() {
-    long ts = millis();
-    if (ts - prevts > 40) {
-        prevts = ts;
-        setState(showingOrder);
+    if (avoidButtonsBouncing()) {
+        switchOff();
+        Serial.println("Go!");
+        score = 0;
+        setConcurrentState(showingOrder);
     }
 }
 
 void timeOut() {
-    setState(madeMistake);
+    setConcurrentState(madeMistake);
 }
 
 void restart() {
-    score = 0;
+    Serial.print("Game Over. Final Score: ");
+    Serial.println(score);
     disableButtonsInterrupt();
     switchOff();
     generateTimes();
@@ -356,23 +392,12 @@ void restart() {
     delay(DELAY);
     digitalWrite(REDLED, LOW);
     delay(MISTAKE_TIME);
-    setState(settingUp);
+    Serial.flush();
+    state = settingUp;
 }
 
 void startTurningOffLeds() {
-    analogWrite(REDLED, 0);
-    resetTimerOne();
-    noInterrupts();
-    difficulty = 1 - (potVal/10);
-    setTimes();
-    interrupts();
-    switchGreens(true);
-    delay(times[0]);
-    int arr[COUPLES];
-    for (int i = 0; i < COUPLES; i++) {
-        arr[i] = UNDEFINED;
-        buttonLedArr[i].turn = UNDEFINED;
-    }
+    int* arr = setupTurningOffLeds();
     for (int i=0; i<COUPLES; i++) {
         delay(times[1]/4);
         arr[i] = randomLedOrder(arr);
@@ -382,27 +407,38 @@ void startTurningOffLeds() {
     currentTurn = COUPLES-1;
     setTimerOne(times[2] * 1000000, timeOut);
     enableButtonsInterrupt(buttonPressed);
-    setState(waitingPlayer);
+    state = waitingPlayer;
+}
+
+int* setupTurningOffLeds() {
+    resetTimerOne();
+    difficulty = 1 - (potVal/10);
+    reduceTimes();
+    switchGreens(true);
+    int arr[COUPLES];
+    for (int i = 0; i < COUPLES; i++) {
+        arr[i] = UNDEFINED;
+        buttonLedArr[i].turn = UNDEFINED;
+    }
+    delay(times[0]);
+    return arr;
+}
+
+int randomLedOrder(int *arr) {
+    int randomNumber = randomInt(0, COUPLES-1);
+    while (isPresent(arr, randomNumber)) {
+        randomNumber = randomInt(0, COUPLES-1);
+    }
+    return randomNumber;
 }
 
 void buttonPressed() {
     noInterrupts();
-    long ts = millis();
-    if (ts - prevts > 40) {
-        prevts = ts;
+    if (avoidButtonsBouncing()) {
         for (int i = 0; i < COUPLES; i++) {
             if (digitalRead(buttonLedArr[i].buttonPin) == HIGH && buttonLedArr[i].turn != UNDEFINED) {
                 if (buttonLedArr[i].turn == currentTurn) {
-                    currentTurn--;
-                    buttonLedArr[i].turn = UNDEFINED;
-                    digitalWrite(buttonLedArr[i].ledPin, HIGH);
-                    if (currentTurn < 0) {
-                        score+=difficulty+1;
-                        Serial.print("New point! Score: ");
-                        Serial.println(score);
-                        setTimes();
-                        state = showingOrder;
-                    }
+                    correctGuess(i);
                 } else {
                     state = madeMistake;
                 }
@@ -411,6 +447,18 @@ void buttonPressed() {
         }
     }
     interrupts();
+}
+
+void correctGuess(int index) {
+    currentTurn--;
+    buttonLedArr[index].turn = UNDEFINED;
+    digitalWrite(buttonLedArr[index].ledPin, HIGH);
+    if (currentTurn < 0) {
+        score += 1 + difficulty;
+        Serial.print("New point! Score: ");
+        Serial.println(score);
+        state = showingOrder;
+    }
 }
 
 void switchGreens(bool state) {
@@ -423,14 +471,6 @@ void switchOff() {
     switchGreens(false);
     digitalWrite(REDLED, LOW);
     Serial.flush();
-}
-
-int randomLedOrder(int *arr) {
-    int randomNumber = randomInt(0, COUPLES-1);
-    while (isPresent(arr, randomNumber)) {
-        randomNumber = randomInt(0, COUPLES-1);
-    }
-    return randomNumber;
 }
 
 int randomInt(int min, int max) {
@@ -456,25 +496,24 @@ void generateTimes() {
     }
 }
 
-void setTimes() {
-    for (int i = 0; i < TIMERS; i++) {
+void reduceTimes() {
+    for (int i = 1; i < TIMERS; i++) {
         times[i] *= difficulty;
     };
-    Serial.print("Times: ");
-    Serial.print(times[2]);
 }
 
 void sleep() {
     Serial.println("GOING TO POWER DOWN IN 1 SECOND...");
     delay(DELAY);
     switchOff();
-    setState(sleeping);
+    state = sleeping;
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
     enableButtonsInterrupt(wakeUp);
     sleep_mode();
     sleep_disable();
     disableButtonsInterrupt();
+    Serial.flush();
 }
 
 void wakeUp() {
