@@ -215,7 +215,6 @@ void dissolvenzaStatusLed()
     }
     for (int i = 0; i < 255; i++)
     {
-        // Serial.print("Welcome to the Restore the Light Game. Press Key B1 to Start");
         analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
         brightness = brightness - fadeAmount;  // cambia la luminosità attraverso il loop
         delay(1);
