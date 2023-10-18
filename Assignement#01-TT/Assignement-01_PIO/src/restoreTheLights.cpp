@@ -24,7 +24,7 @@ void setup() {
         pinMode(buttonLedArr[i].ledPin, OUTPUT);
     }
     pinMode(REDLED, OUTPUT);
-    Serial.begin(115200);
+    Serial.begin(9600);
 }
 
 void loop() {
@@ -67,8 +67,8 @@ void disableButtonsInterrupt() {
 }
 
 void setTimerOne(unsigned long time, void (*f)()) {
-    Timer1.initialize();
-    Timer1.setPeriod(time);
+    Timer1.initialize(time + 300);
+    delayMicroseconds(300);
     Timer1.attachInterrupt(f);
 }
 
@@ -163,7 +163,6 @@ void setupTurningOffLeds(int* arr) {
     difficulty = 1 - (potVal/10);
     reduceTimes();
     switchGreens(true);
-    int arr[COUPLES];
     for (int i = 0; i < COUPLES; i++) {
         arr[i] = UNDEFINED;
         buttonLedArr[i].turn = UNDEFINED;
@@ -246,14 +245,14 @@ void generateTimes() {
 void reduceTimes() {
     for (int i = 1; i < TIMERS; i++) {
         times[i] *= difficulty;
-    };
+    }
 }
 
 void sleep() {
     Serial.println("GOING TO POWER DOWN IN 1 SECOND...");
     delay(DELAY);
     switchOff();
-    state = sleeping;
+    setConcurrentState(sleeping); //!IMPORTANT
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
     enableButtonsInterrupt(wakeUp);
@@ -264,6 +263,7 @@ void sleep() {
 }
 
 void wakeUp() {
+    Serial.println("WAKING UP...");
     prevts = millis();
     state = settingUp;
 }
