@@ -29,6 +29,7 @@ int brightness;
 int fadeAmount;
 unsigned long prevoiusTime;
 int led;
+bool fadeMode = false; //controlla se la luminosità deve crescere (false) o decrescere (true)
 
 void setup()
 {
@@ -207,19 +208,20 @@ void randomizeOrder()
 
 void dissolvenzaStatusLed()
 {
-    for (int i = 0; i < 255; i++)
-    {
-        analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
-        brightness = brightness + fadeAmount;  // cambia la luminosità attraverso il loop
-        delay(1);
+    if(fadeMode){
+        if(brightness<255){
+            brightness = brightness + fadeAmount;  // cambia la luminosità attraverso il loop
+        }else{
+            fadeMode=false;
+        }
+    }else{
+        if(brightness>0){
+            rightness = brightness - fadeAmount;  // cambia la luminosità attraverso il loop
+        }else{
+            fadeMode=true;
+        }
     }
-    for (int i = 0; i < 255; i++)
-    {
-        analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
-        brightness = brightness - fadeAmount;  // cambia la luminosità attraverso il loop
-        delay(1);
-    }
-    delay(490);
+    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
 }
 
 void goToEndGame()
