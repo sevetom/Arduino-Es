@@ -1,8 +1,8 @@
 /**
  * @author lorenzo.annibalini@studio.unibo.it
- * @author lorenzo.bacchini26@studio.unibo.it
+ * @author lorenzo.bacchini4@studio.unibo.it
  * @author emanuele.sanchi@studio.unibo.it
-*/
+ */
 #include <EnableInterrupt.h>
 #include <TimerOne.h>
 #define LED_PIN1 13
@@ -23,8 +23,8 @@ int turnedOffOrder[4] = {0, 0, 0, 0};
 int pressedOrder[4] = {0, 0, 0, 0};
 int pos;
 float factor;
-int t2;
-int t3;
+unsigned long t2;
+unsigned long t3;
 unsigned long prevoiusTime;
 int turnedOffLed;
 enum gameState
@@ -58,14 +58,16 @@ void setup()
     gameState = outGame;
     randomSeed(analogRead(4));
     // azzero registers
-    TCCR1A = 0;
+    /*TCCR1A = 0;
     TCCR1B = 0;
-    TCNT1 = 0;
+    TCNT1 = 0;*/
     // attached interrupts on buttons
     enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
     enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
     enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
     enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
+    //initialize timer
+    Timer1.initialize();
 }
 
 void loop()
@@ -84,7 +86,7 @@ void loop()
         delay(1000);
         turnOffLeds();
         // start timer
-        createTimer();
+        createTimer(t3);
         // change state
         gameState = inGame;
         break;
@@ -92,9 +94,15 @@ void loop()
         // chiama funzione per mostrare punteggio e fare fade del led rosso
         showScore();
         dissolvenzaStatusLed();
+        stopTimer();
+        gameState=outGame;
+        turnedOffOrder[0] = 0;
+        turnedOffOrder[1] = 0;
+        turnedOffOrder[2] = 0;
+        turnedOffOrder[3] = 0;
+        // stop the timer
         break;
     case inGame:
-
         // check array lenght by checking if last element is equal 0
         if (pressedOrder[3] != 0)
         {
@@ -156,6 +164,7 @@ void randomizeOrder()
         int choise = random(0, N_LED);
         if (turnedOffOrder[choise] == 0)
         {
+            //Serial.println("aaaaa");
             turnedOffOrder[choise] = i;
             i++;
         }
@@ -234,17 +243,20 @@ void insertButton(int n)
  */
 void goToEndGame()
 {
-    gameState = endGame;
     Serial.println("fine");
+    gameState = endGame;
     pos = 0;
 }
 
 /**
  * function to create a timer and attach the interrupt
  */
-void createTimer()
+void createTimer(unsigned long t2)
 {
-    Timer1.initialize(3 * 1000000);
+    Timer1.detachInterrupt();
+    noInterrupts();
+    Timer1.setPeriod(t2 * 1000000);
+    interrupts();
     Timer1.attachInterrupt(goToEndGame);
 }
 
@@ -257,9 +269,12 @@ void stopTimer()
     Timer1.detachInterrupt();
 }
 
+/**
+ * Function to show score
+ */
 void showScore()
 {
-    //Serial.println("Your score" + score);
+    // Serial.println("Your score" + score);
     score = 0;
 }
 
@@ -279,4 +294,8 @@ void dissolvenzaStatusLed()
         }
     }
     analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità*/
+}
+
+void printHello() {
+    Serial.println("hello");
 }
