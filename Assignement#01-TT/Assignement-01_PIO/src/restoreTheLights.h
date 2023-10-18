@@ -98,7 +98,7 @@
     /**
      * Sets up everything needed to turn off the leds in order.
     */
-    int* setupTurningOffLeds(); 
+    void setupTurningOffLeds(int* arr); 
 
     /**
      * Generates a random order for the leds.

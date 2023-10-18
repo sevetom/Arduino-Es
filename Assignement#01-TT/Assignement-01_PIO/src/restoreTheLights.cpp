@@ -144,7 +144,8 @@ void restart() {
 }
 
 void startTurningOffLeds() {
-    int* arr = setupTurningOffLeds();
+    int arr[COUPLES];
+    setupTurningOffLeds(arr);
     for (int i=0; i<COUPLES; i++) {
         delay(times[1]/4);
         arr[i] = randomLedOrder(arr);
@@ -157,7 +158,7 @@ void startTurningOffLeds() {
     state = waitingPlayer;
 }
 
-int* setupTurningOffLeds() {
+void setupTurningOffLeds(int* arr) {
     resetTimerOne();
     difficulty = 1 - (potVal/10);
     reduceTimes();
@@ -168,7 +169,6 @@ int* setupTurningOffLeds() {
         buttonLedArr[i].turn = UNDEFINED;
     }
     delay(times[0]);
-    return arr;
 }
 
 int randomLedOrder(int *arr) {
