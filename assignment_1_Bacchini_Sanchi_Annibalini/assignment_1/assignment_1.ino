@@ -1,3 +1,8 @@
+/**
+ * @author lorenzo.annibalini@studio.unibo.it
+ * @author lorenzo.bacchini4@studio.unibo.it
+ * @author emanuele.sanchi@studio.unibo.it
+ */
 #include <EnableInterrupt.h>
 #include <TimerOne.h>
 #define LED_PIN1 13
@@ -10,26 +15,24 @@
 #define BUTTON_PIN3 5
 #define BUTTON_PIN4 4
 #define POT_PIN A0
-#define T1 3000
-#define T_OUT 10000
 #define N_LED 4
-#define BRIGHTNESS 255
+#define FIXAMOUNT 300
 
 int score;
-bool inGame;
-bool endGame;
-bool outGame;
 int turnedOffOrder[4] = {0, 0, 0, 0};
 int pressedOrder[4] = {0, 0, 0, 0};
-int i;
-int factor;
-int t2;
-int t3;
-int brightness;
-int fadeAmount;
+int pos;
+float factor;
+unsigned long t2;
+unsigned long t3;
 unsigned long prevoiusTime;
-int led;
-bool fadeMode = true; //controlla se la luminosità deve crescere (true) o decrescere (false)
+int turnedOffLed;
+enum gameState
+{
+    inGame,
+    outGame,
+    endGame
+} gameState;
 
 void setup()
 {
@@ -44,150 +47,115 @@ void setup()
     pinMode(BUTTON_PIN3, INPUT);
     pinMode(BUTTON_PIN4, INPUT);
     pinMode(LED_ERRORPIN, OUTPUT);
-    // initialize variables for game states
-    inGame = false;
-    endGame = false;
-    outGame = true;
     // initialize variables for timing and gloabl counters
     score = 0;
-    i = 0;
-    t2 = 4000;
-    t3 = 5000;
-    brightness = 10;
-    fadeAmount = 5;
+    pos = 0;
+    t2 = 4;
+    t3 = 5;
     prevoiusTime = 0;
-    led = 0;
-
+    turnedOffLed = 0;
+    factor = 0.2;
+    gameState = outGame;
     randomSeed(analogRead(4));
+    // azzero registers
+    /*TCCR1A = 0;
+    TCCR1B = 0;
+    TCNT1 = 0;*/
     // attached interrupts on buttons
     enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
     enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
     enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
     enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
-    // create and start timers
-    Timer1.initialize(t3 * 1000000);
-    Timer1.attachInterrupt(goToEndGame);
+    //initialize timer
+    Timer1.initialize();
 }
 
 void loop()
 {
-    if (outGame)
+    switch (gameState)
     {
-        // genero sequenza random
-        if (led == 0)
+    case outGame:
+        // randomize order of leds' turning off
+        randomizeOrder();
+        // turning on all leds
+        digitalWrite(LED_PIN1, HIGH);
+        digitalWrite(LED_PIN2, HIGH);
+        digitalWrite(LED_PIN3, HIGH);
+        digitalWrite(LED_PIN4, HIGH);
+        // wait 1 second to starting turning off leds
+        delay(1000);
+        turnOffLeds();
+        // start timer
+        createTimer(t3);
+        // change state
+        gameState = inGame;
+        break;
+    case endGame:
+        // chiama funzione per mostrare punteggio e fare fade del led rosso
+        showScore();
+        dissolvenzaStatusLed();
+        stopTimer();
+        gameState=outGame;
+        turnedOffOrder[0] = 0;
+        turnedOffOrder[1] = 0;
+        turnedOffOrder[2] = 0;
+        turnedOffOrder[3] = 0;
+        // stop the timer
+        break;
+    case inGame:
+        // check array lenght by checking if last element is equal 0
+        if (pressedOrder[3] != 0)
         {
-            randomizeOrder();
-            // accendo tutti i led
-            digitalWrite(LED_PIN1, HIGH);
-            digitalWrite(LED_PIN2, HIGH);
-            digitalWrite(LED_PIN3, HIGH);
-            digitalWrite(LED_PIN4, HIGH);
-            dissolvenzaStatusLed();
-        }
-        // spengo in base all'ordine randomizzato
-        // delay(1500);
-        if (led < 4)
-        {
-            int current = turnedOffOrder[led];
-            switch (current)
+            // stop the timer
+            stopTimer();
+            // check pressed button order
+            checkPressOrder();
+            if (gameState == inGame)
             {
-            case 1:
-                digitalWrite(LED_PIN1, LOW);
-                break;
-            case 2:
-                digitalWrite(LED_PIN2, LOW);
-                break;
-            case 3:
-                digitalWrite(LED_PIN3, LOW);
-                break;
-            case 4:
-                digitalWrite(LED_PIN4, LOW);
-                break;
+                score++;
+                // reduce games timers
+                t2 = t2 - t2 * factor;
+                t3 = t3 - t3 * factor;
             }
-            delay(t2 / N_LED);
-            led++;
+            // change state
+            gameState = outGame;
         }
-        else
-        {
-            // parte timer
-            outGame = false;
-            inGame = true;
-        }
+        break;
+    default:
+        break;
     }
-    else
+}
+
+/**
+ * Function to turn off the leds by random order previously chose
+ */
+void turnOffLeds()
+{
+    // looping in the array of turning off order
+    int i = 0;
+    for (i = 0; i < 4; i++)
     {
-        if (endGame)
+        switch (turnedOffOrder[i])
         {
-            // mostro led rosso
-            dissolvenzaStatusLed();
-            // mostro punteggio
-            Serial.println(score);
-            // leggo valore potenziometro
-            factor = analogRead(POT_PIN);
-            factor = map(factor, 0, 1023, 0, 4);
-            // aspetta 10 sec
-            delay(T_OUT);
-            endGame = false;
-            outGame = true;
-            digitalWrite(LED_ERRORPIN, LOW);
+        case 1:
+            digitalWrite(LED_PIN1, LOW);
+            break;
+        case 2:
+            digitalWrite(LED_PIN2, LOW);
+            break;
+        case 3:
+            digitalWrite(LED_PIN3, LOW);
+            break;
+        case 4:
+            digitalWrite(LED_PIN4, LOW);
+            break;
         }
-        else
-        {
-            if (inGame)
-            {
-                // controlla length array
-                if (pressedOrder[3] != 0)
-                {
-                    // stoppa timer
-                    for (int x = 0; x < N_LED; x++)
-                    {
-                        if (pressedOrder[x] != turnedOffOrder[3 - x])
-                        {
-                            endGame = true;
-                        }
-                    }
-                    if (!endGame)
-                    {
-                        score++;
-                        // diminuisco tempi per difficoltà
-                    }
-                    outGame = true;
-                }
-            }
-        }
+        delay(/*t2 / N_LED*/ 1000);
     }
 }
-
-void button1pressed()
-{
-    checkButton(1);
-}
-
-void button2pressed()
-{
-    checkButton(2);
-}
-
-void button3pressed()
-{
-    checkButton(3);
-}
-
-void button4pressed()
-{
-    checkButton(4);
-}
-
-void checkButton(int n)
-{
-    if (millis() - prevoiusTime > 300)
-    {
-        pressedOrder[i] = n;
-        Serial.println(pressedOrder[i]);
-        prevoiusTime = millis();
-    }
-}
-
+/**
+ * Function to create a pseudo-random order to turn off leds
+ */
 void randomizeOrder()
 {
     int i = 1;
@@ -196,19 +164,123 @@ void randomizeOrder()
         int choise = random(0, N_LED);
         if (turnedOffOrder[choise] == 0)
         {
+            //Serial.println("aaaaa");
             turnedOffOrder[choise] = i;
             i++;
         }
     }
+    // print the order on serial line
     Serial.println(turnedOffOrder[0]);
     Serial.println(turnedOffOrder[1]);
     Serial.println(turnedOffOrder[2]);
     Serial.println(turnedOffOrder[3]);
 }
 
+/**
+ * Function to check if the order of pressed buttons is right
+ */
+void checkPressOrder()
+{
+    for (int x = 0; x < N_LED; x++)
+    {
+        if (pressedOrder[x] != turnedOffOrder[3 - x])
+        {
+            gameState = endGame;
+        }
+    }
+    pos = 0;
+}
+
+/**
+ * Function for button 1 interrupt
+ */
+void button1pressed()
+{
+    insertButton(1);
+}
+
+/**
+ * Function for button 2 interrupt
+ */
+void button2pressed()
+{
+    insertButton(2);
+}
+
+/**
+ * Function for button 3 interrupt
+ */
+void button3pressed()
+{
+    insertButton(3);
+}
+
+/**
+ * Function for button 4 interrupt
+ */
+void button4pressed()
+{
+    insertButton(4);
+}
+
+/**
+ * Function to insert the pressed button into the array
+ */
+void insertButton(int n)
+{
+    // check for bouncing of phisical buttons
+    if (millis() - prevoiusTime > FIXAMOUNT)
+    {
+        pressedOrder[pos] = n;
+        Serial.println(pressedOrder[pos]);
+        prevoiusTime = millis();
+        pos++;
+    }
+}
+
+/**
+ * function to end the game after the timeout
+ */
+void goToEndGame()
+{
+    Serial.println("fine");
+    gameState = endGame;
+    pos = 0;
+}
+
+/**
+ * function to create a timer and attach the interrupt
+ */
+void createTimer(unsigned long t2)
+{
+    Timer1.detachInterrupt();
+    noInterrupts();
+    Timer1.setPeriod(t2 * 1000000);
+    interrupts();
+    Timer1.attachInterrupt(goToEndGame);
+}
+
+/**
+ * funtcion to stop the timer and detach the interrupt
+ */
+void stopTimer()
+{
+    Timer1.stop();
+    Timer1.detachInterrupt();
+}
+
+/**
+ * Function to show score
+ */
+void showScore()
+{
+    // Serial.println("Your score" + score);
+    score = 0;
+}
+
 void dissolvenzaStatusLed()
 {
-    if(fadeMode){
+    /*if(fadeMode){
         if(brightness<255){
             brightness = brightness + fadeAmount;  // cambia la luminosità attraverso il loop
         }else{
@@ -221,14 +293,9 @@ void dissolvenzaStatusLed()
             fadeMode=true;
         }
     }
-    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
+    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità*/
 }
 
-void goToEndGame()
-{
-    endGame = true;
-    inGame = false;
-    outGame = false;
-    Serial.println("fine");
-    Timer1.restart();
+void printHello() {
+    Serial.println("hello");
 }
