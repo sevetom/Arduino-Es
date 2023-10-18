@@ -244,11 +244,7 @@ void goToEndGame()
  */
 void createTimer()
 {
-    TCCR1A = 0;
-    TCCR1B = 0;
-    TCNT1 = 0;
-    Timer1.initialize();
-    Timer1.setPeriod(t3 * 1000000);
+    Timer1.initialize(3 * 1000000);
     Timer1.attachInterrupt(goToEndGame);
 }
 
@@ -263,13 +259,13 @@ void stopTimer()
 
 void showScore()
 {
-    Serial.println("Your score" + score);
+    //Serial.println("Your score" + score);
     score = 0;
 }
 
 void dissolvenzaStatusLed()
 {
-    if(fadeMode){
+    /*if(fadeMode){
         if(brightness<255){
             brightness = brightness + fadeAmount;  // cambia la luminosità attraverso il loop
         }else{
@@ -282,5 +278,5 @@ void dissolvenzaStatusLed()
             fadeMode=true;
         }
     }
-    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
+    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità*/
 }

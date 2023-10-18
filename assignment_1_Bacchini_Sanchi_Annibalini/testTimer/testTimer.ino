@@ -1,15 +1,15 @@
 #include <TimerOne.h>
 
-void setup(){
+void setup()
+{
     // inizialize serial monitor, leds and buttons
     Serial.begin(9600);
-    delay(2000);
+    delayMicroseconds(5000000);
     createTimer();
 }
 
-void loop() {
-
-
+void loop()
+{
 }
 
 /**
@@ -25,10 +25,6 @@ void goToEndGame()
  */
 void createTimer()
 {
-    TCCR1A = 0;
-    TCCR1B = 0;
-    TCNT1 = 0;
-    Timer1.initialize();
-    Timer1.setPeriod(5 * 1000000);
+    Timer1.initialize(5 * 1000000);
     Timer1.attachInterrupt(goToEndGame);
 }
