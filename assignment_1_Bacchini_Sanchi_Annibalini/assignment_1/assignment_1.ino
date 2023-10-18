@@ -29,7 +29,7 @@ int brightness;
 int fadeAmount;
 unsigned long prevoiusTime;
 int led;
-bool fadeMode = false; //controlla se la luminosità deve crescere (false) o decrescere (true)
+bool fadeMode = true; //controlla se la luminosità deve crescere (true) o decrescere (false)
 
 void setup()
 {
