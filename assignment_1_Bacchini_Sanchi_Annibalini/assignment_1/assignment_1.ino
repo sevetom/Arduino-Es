@@ -1,3 +1,8 @@
+/**
+ * @author lorenzo.annibalini@studio.unibo.it
+ * @author lorenzo.bacchini26@studio.unibo.it
+ * @author emanuele.sanchi@studio.unibo.it
+*/
 #include <EnableInterrupt.h>
 #include <TimerOne.h>
 #define LED_PIN1 13
