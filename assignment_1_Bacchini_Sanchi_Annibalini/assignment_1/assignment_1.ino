@@ -66,7 +66,7 @@ void setup()
     enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
     enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
     enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
-    //initialize timer
+    // initialize timer
     Timer1.initialize();
 }
 
@@ -95,7 +95,7 @@ void loop()
         showScore();
         dissolvenzaStatusLed();
         stopTimer();
-        gameState=outGame;
+        gameState = outGame;
         turnedOffOrder[0] = 0;
         turnedOffOrder[1] = 0;
         turnedOffOrder[2] = 0;
@@ -164,7 +164,7 @@ void randomizeOrder()
         int choise = random(0, N_LED);
         if (turnedOffOrder[choise] == 0)
         {
-            //Serial.println("aaaaa");
+            // Serial.println("aaaaa");
             turnedOffOrder[choise] = i;
             i++;
         }
@@ -296,6 +296,7 @@ void dissolvenzaStatusLed()
     analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità*/
 }
 
-void printHello() {
+void printHello()
+{
     Serial.println("hello");
 }
