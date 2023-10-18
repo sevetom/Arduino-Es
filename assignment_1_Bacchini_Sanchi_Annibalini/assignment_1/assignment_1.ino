@@ -91,7 +91,7 @@ void loop()
     case endGame:
         // chiama funzione per mostrare punteggio e fare fade del led rosso
         showScore();
-        fadeAmount();
+        dissolvenzaStatusLed();
         break;
     case inGame:
 
@@ -267,7 +267,20 @@ void showScore()
     score = 0;
 }
 
-void fadeAmount()
+void dissolvenzaStatusLed()
 {
-    // fade
+    if(fadeMode){
+        if(brightness<255){
+            brightness = brightness + fadeAmount;  // cambia la luminosità attraverso il loop
+        }else{
+            fadeMode=false;
+        }
+    }else{
+        if(brightness>0){
+            rightness = brightness - fadeAmount;  // cambia la luminosità attraverso il loop
+        }else{
+            fadeMode=true;
+        }
+    }
+    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
 }
