@@ -1,5 +1,5 @@
-#ifndef ASSIGNEMENT_01_H
-    #define ASSIGNEMENT_01_H
+#ifndef RESTORE_THE_LIGHTS_H
+    #define RESTORE_THE_LIGHTS_H
     // Standard arduino library
     #include <Arduino.h>
     // Standard C libraries
@@ -12,78 +12,6 @@
     #include <TimerOne.h>
     // Needed to put arduino to sleep
     #include <avr/sleep.h>
-
-    // Number of buttons and leds couples used
-    #define COUPLES 4
-    // Pin for the red led
-    #define REDLED 6
-    // Pins for the green leds
-    #define GREENLED1 12
-    #define GREENLED2 11
-    #define GREENLED3 10
-    #define GREENLED4 9
-    // Pins for the buttons
-    #define BUTTON1 5
-    #define BUTTON2 4
-    #define BUTTON3 3
-    #define BUTTON4 2
-    // Pin for the potentiometer
-    #define POTENTIOMETER A0
-    /* How many variables that are needed to take track of time
-        in the differents parts of the game */
-    #define TIMERS 3
-    // Minum time given fro an action (milliseconds)
-    #define MIN_TIME 1000
-    // Maximum time given for an action (milliseconds)
-    #define MAX_TIME 3000
-    // The difference in time from one action to the next (milliseconds)
-    #define TIME_INCREASE 2000
-    // Quantity for how much the led shifts in light while fading
-    #define FADE 5
-    // Simbolic for variables waiting to have a valid number assigned
-    #define UNDEFINED -1
-    // Frequently used value when waiting (milliseconds)
-    #define DELAY 1000
-    // Time before going to sleep (microseconds)
-    #define SLEEP_TIME 10 * 1000000
-    // Time before getting another try (milliseconds)
-    #define MISTAKE_TIME 10 * 1000
-    /* This are not standard potentiometer values but
-        the one we are using is of really poor quality */
-    #define POT_MIN 23
-    #define POT_MAX 1001
-    // Levels of difficulty of the game
-    #define MIN_DIFF 1
-    #define MAX_DIFF 4
-
-    /**
-     * This struct couples all the buttons with their respective leds. 
-     * Also maintains their turn in the game.
-    */
-    typedef struct {
-        int buttonPin;
-        int ledPin;
-        int turn;
-    } buttonLed;
-
-    /**
-     * This is used to define the states the game can assume.
-    */
-    typedef enum {
-        settingUp,
-        starting,
-        showingOrder,
-        waitingPlayer,
-        madeMistake,
-        sleeping
-    } gameState;
-
-    /**
-     * t1 [0] is the time elapsed to start the game
-     * t2 [1] is time elapsed to turn on the leds
-     * t3 [2] is the time to wait for the player
-    */
-    int times[TIMERS];
 
     /**
      * The main function executed before everything else 
@@ -238,6 +166,78 @@
      * Wakes up the arduino.
     */
     void wakeUp();
+
+    // Number of buttons and leds couples used
+    #define COUPLES 4
+    // Pin for the red led
+    #define REDLED 6
+    // Pins for the green leds
+    #define GREENLED1 12
+    #define GREENLED2 11
+    #define GREENLED3 10
+    #define GREENLED4 9
+    // Pins for the buttons
+    #define BUTTON1 5
+    #define BUTTON2 4
+    #define BUTTON3 3
+    #define BUTTON4 2
+    // Pin for the potentiometer
+    #define POTENTIOMETER A0
+    /* How many variables that are needed to take track of time
+        in the differents parts of the game */
+    #define TIMERS 3
+    // Minum time given fro an action (milliseconds)
+    #define MIN_TIME 1000
+    // Maximum time given for an action (milliseconds)
+    #define MAX_TIME 3000
+    // The difference in time from one action to the next (milliseconds)
+    #define TIME_INCREASE 2000
+    // Quantity for how much the led shifts in light while fading
+    #define FADE 5
+    // Simbolic for variables waiting to have a valid number assigned
+    #define UNDEFINED -1
+    // Frequently used value when waiting (milliseconds)
+    #define DELAY 1000
+    // Time before going to sleep (microseconds)
+    #define SLEEP_TIME 10 * 1000000
+    // Time before getting another try (milliseconds)
+    #define MISTAKE_TIME 10 * 1000
+    /* This are not standard potentiometer values but
+        the one we are using is of really poor quality */
+    #define POT_MIN 23
+    #define POT_MAX 1001
+    // Levels of difficulty of the game
+    #define MIN_DIFF 1
+    #define MAX_DIFF 4
+
+    /**
+     * This struct couples all the buttons with their respective leds. 
+     * Also maintains their turn in the game.
+    */
+    typedef struct {
+        int buttonPin;
+        int ledPin;
+        int turn;
+    } buttonLed;
+
+    /**
+     * This is used to define the states the game can assume.
+    */
+    typedef enum {
+        settingUp,
+        starting,
+        showingOrder,
+        waitingPlayer,
+        madeMistake,
+        sleeping
+    } gameState;
+
+    /**
+     * t1 [0] is the time elapsed to start the game
+     * t2 [1] is time elapsed to turn on the leds
+     * t3 [2] is the time to wait for the player
+    */
+    int times[TIMERS];
 
     // The state the game is currently in
     volatile gameState state;
