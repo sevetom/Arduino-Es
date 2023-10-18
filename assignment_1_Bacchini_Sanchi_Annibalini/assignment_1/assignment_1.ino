@@ -52,6 +52,10 @@ void setup()
     factor = 0.2;
     gameState = outGame;
     randomSeed(analogRead(4));
+    // azzero registers
+    TCCR1A = 0;
+    TCCR1B = 0;
+    TCNT1 = 0;
     // attached interrupts on buttons
     enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
     enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
@@ -64,7 +68,7 @@ void loop()
     switch (gameState)
     {
     case outGame:
-        // randomize oreder of leds' turning off
+        // randomize order of leds' turning off
         randomizeOrder();
         // turning on all leds
         digitalWrite(LED_PIN1, HIGH);
@@ -81,6 +85,8 @@ void loop()
         break;
     case endGame:
         // chiama funzione per mostrare punteggio e fare fade del led rosso
+        showScore();
+        fadeAmount();
         break;
     case inGame:
 
@@ -233,6 +239,9 @@ void goToEndGame()
  */
 void createTimer()
 {
+    TCCR1A = 0;
+    TCCR1B = 0;
+    TCNT1 = 0;
     Timer1.initialize();
     Timer1.setPeriod(t3 * 1000000);
     Timer1.attachInterrupt(goToEndGame);
@@ -245,4 +254,15 @@ void stopTimer()
 {
     Timer1.stop();
     Timer1.detachInterrupt();
+}
+
+void showScore()
+{
+    Serial.println("Your score" + score);
+    score = 0;
+}
+
+void fadeAmount()
+{
+    // fade
 }
