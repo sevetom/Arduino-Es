@@ -23,15 +23,21 @@ int turnedOffOrder[4] = {0, 0, 0, 0};
 int pressedOrder[4] = {0, 0, 0, 0};
 int pos;
 float factor;
-unsigned long t2;
-unsigned long t3;
+int t1;
+int t2;
+int t3;
+int milliSecondsMultiplier;
+unsigned long microsecondMultiplier;
 unsigned long prevoiusTime;
 int turnedOffLed;
-enum gameState
+int fadeAmount;
+int brightness;
+volatile enum gameState
 {
     inGame,
     outGame,
-    endGame
+    endGame,
+    prova
 } gameState;
 
 void setup()
@@ -50,28 +56,30 @@ void setup()
     // initialize variables for timing and gloabl counters
     score = 0;
     pos = 0;
+    t1 = 1;
     t2 = 4;
     t3 = 5;
+    milliSecondsMultiplier = 1000;
+    microsecondMultiplier = 1000000;
+    fadeAmount = 5;
+    brightness = 0;
     prevoiusTime = 0;
     turnedOffLed = 0;
     factor = 0.2;
     gameState = outGame;
     randomSeed(analogRead(4));
-    // azzero registers
-    /*TCCR1A = 0;
-    TCCR1B = 0;
-    TCNT1 = 0;*/
     // attached interrupts on buttons
     enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
     enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
     enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
     enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
     // initialize timer
-    Timer1.initialize();
+    Timer1initialize();
 }
 
 void loop()
 {
+    Serial.println(gameState);
     switch (gameState)
     {
     case outGame:
@@ -83,24 +91,27 @@ void loop()
         digitalWrite(LED_PIN3, HIGH);
         digitalWrite(LED_PIN4, HIGH);
         // wait 1 second to starting turning off leds
-        delay(1000);
+        delay(1*milliSecondsMultiplier);
         turnOffLeds();
         // start timer
-        createTimer(t3);
+        Timer1setPeriod(goToEndGame, 3000000);
+        //TODO: remove the line below
+        //createTimer(t3);
         // change state
-        gameState = inGame;
+        //gameState = inGame;
+        gameState = prova;
         break;
     case endGame:
         // chiama funzione per mostrare punteggio e fare fade del led rosso
         showScore();
-        dissolvenzaStatusLed();
-        stopTimer();
-        gameState = outGame;
+        //dissolvenzaStatusLed();
+        //stopTimer();
         turnedOffOrder[0] = 0;
         turnedOffOrder[1] = 0;
         turnedOffOrder[2] = 0;
         turnedOffOrder[3] = 0;
-        // stop the timer
+        delay(1 * milliSecondsMultiplier);
+        gameState = outGame;
         break;
     case inGame:
         // check array lenght by checking if last element is equal 0
@@ -124,6 +135,21 @@ void loop()
     default:
         break;
     }
+}
+
+void Timer1initialize(){
+    noInterrupts();
+    Timer1.initialize();
+    Timer1.stop();
+    interrupts();
+}
+
+void Timer1setPeriod(void (*isr)(),unsigned long microseconds){
+    noInterrupts();
+    //Timer1.restart();
+    Timer1.setPeriod(microseconds);
+    Timer1.attachInterrupt(isr);
+    interrupts();
 }
 
 /**
@@ -150,7 +176,12 @@ void turnOffLeds()
             digitalWrite(LED_PIN4, LOW);
             break;
         }
-        delay(/*t2 / N_LED*/ 1000);
+        /*
+        TODO: in questo caso noi aspettiamo una frazione di tempo t2 anche dopo lo spegnimento
+        dellultimo led, mentre credo che dopo lo spegnimento dell'ultimo led non ci sia bisogno di aspettare
+        e si possa passare subito al controllo dei pulsanti
+        */
+        delay((t2*milliSecondsMultiplier) / N_LED);
     }
 }
 /**
@@ -164,7 +195,6 @@ void randomizeOrder()
         int choise = random(0, N_LED);
         if (turnedOffOrder[choise] == 0)
         {
-            // Serial.println("aaaaa");
             turnedOffOrder[choise] = i;
             i++;
         }
@@ -243,6 +273,7 @@ void insertButton(int n)
  */
 void goToEndGame()
 {
+    stopTimer();
     Serial.println("fine");
     gameState = endGame;
     pos = 0;
@@ -274,13 +305,20 @@ void stopTimer()
  */
 void showScore()
 {
-    // Serial.println("Your score" + score);
+    Serial.print("Your score = ");
+    Serial.println(score);
     score = 0;
 }
 
 void dissolvenzaStatusLed()
 {
-    /*if(fadeMode){
+    if(brightness < 0 || brightness > 255){
+        fadeAmount = -fadeAmount;
+    }
+    brightness = brightness + fadeAmount;
+    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
+    /*
+    if(fadeMode){
         if(brightness<255){
             brightness = brightness + fadeAmount;  // cambia la luminosità attraverso il loop
         }else{
@@ -293,10 +331,5 @@ void dissolvenzaStatusLed()
             fadeMode=true;
         }
     }
-    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità*/
-}
-
-void printHello()
-{
-    Serial.println("hello");
+    */
 }
