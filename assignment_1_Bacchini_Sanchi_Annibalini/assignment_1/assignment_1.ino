@@ -4,7 +4,6 @@
  * @author emanuele.sanchi@studio.unibo.it
  */
 #include <EnableInterrupt.h>
-#include <TimerOne.h>
 #include "utils.h"
 #define LED_PIN1 13
 #define LED_PIN2 12
@@ -20,8 +19,8 @@
 #define FIXAMOUNT 300
 
 int score;
-int *turnedOffOrder = (int []) {0, 0, 0, 0};
-int *pressedOrder = (int []) {0, 0, 0, 0};
+int *turnedOffOrder = (int[]){0, 0, 0, 0};
+int *pressedOrder = (int[]){0, 0, 0, 0};
 int pos;
 float factor;
 unsigned long t2;
@@ -58,10 +57,10 @@ void setup()
     prevoiusTime = 0;
     turnedOffLed = 0;
     factor = 0.2;
-    brightness=0;
-    fadeAmount=1;
+    brightness = 0;
+    fadeAmount = 1;
     gameState = outGame;
-    //initialize array
+    // initialize array
     flushArray(turnedOffOrder);
     flushArray(pressedOrder);
     randomSeed(analogRead(4));
@@ -96,7 +95,7 @@ void loop()
         break;
     case endGame:
         showScore();
-        //dissolvenzaStatusLed(); //non va
+        // dissolvenzaStatusLed(); //non va
         stopTimer();
         // change gameState
         gameState = outGame;
@@ -229,48 +228,6 @@ void goToEndGame()
 }
 
 /**
- * Function to initialize a timer
- */
-void Timer1Initialize()
-{
-    noInterrupts();
-    Timer1.initialize();
-    Timer1.stop();
-    interrupts();
-}
-
-/**
- * Function to set a period and a function interrupt to the timer
- */
-void Timer1setPeriod(void (*isr)(), unsigned long microseconds)
-{
-    noInterrupts();
-    Timer1.attachInterrupt(isr, microseconds);
-    interrupts();
-}
-
-/**
- * function to create a timer and attach the interrupt
- */
-void createTimer(unsigned long t2)
-{
-    Timer1.detachInterrupt();
-    noInterrupts();
-    Timer1.setPeriod(t2 * 1000000);
-    interrupts();
-    Timer1.attachInterrupt(goToEndGame);
-}
-
-/**
- * funtcion to stop the timer and detach the interrupt
- */
-void stopTimer()
-{
-    Timer1.stop();
-    Timer1.detachInterrupt();
-}
-
-/**
  * Function to show score
  */
 void showScore()
@@ -283,15 +240,15 @@ void dissolvenzaStatusLed()
 {
     for (int i = 0; i < 255; i++)
     {
-        analogWrite(LED_ERRORPIN, brightness);  // imposta la luminosità
-        brightness = brightness + fadeAmount; // cambia la luminosità attraverso il loop
+        analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
+        brightness = brightness + fadeAmount;  // cambia la luminosità attraverso il loop
         delay(100);
     }
     for (int i = 0; i < 255; i++)
     {
         // Serial.print("Welcome to the Restore the Light Game. Press Key B1 to Start");
-        analogWrite(LED_ERRORPIN, brightness);  // imposta la luminosità
-        brightness = brightness - fadeAmount; // cambia la luminosità attraverso il loop
+        analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
+        brightness = brightness - fadeAmount;  // cambia la luminosità attraverso il loop
         delay(100);
     }
     delay(490);
