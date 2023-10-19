@@ -5,6 +5,7 @@
  */
 #include <EnableInterrupt.h>
 #include <TimerOne.h>
+#include "utils.h"
 #define LED_PIN1 13
 #define LED_PIN2 12
 #define LED_PIN3 11
@@ -19,8 +20,8 @@
 #define FIXAMOUNT 300
 
 int score;
-int turnedOffOrder[4] = {0, 0, 0, 0};
-int pressedOrder[4] = {0, 0, 0, 0};
+int *turnedOffOrder = (int []) {0, 0, 0, 0};
+int *pressedOrder = (int []) {0, 0, 0, 0};
 int pos;
 float factor;
 unsigned long t2;
@@ -60,6 +61,9 @@ void setup()
     brightness=0;
     fadeAmount=1;
     gameState = outGame;
+    //initialize array
+    flushArray(turnedOffOrder);
+    flushArray(pressedOrder);
     randomSeed(analogRead(4));
     // attached interrupts on buttons
     enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
@@ -76,7 +80,7 @@ void loop()
     {
     case outGame:
         // randomize order of leds' turning off
-        randomizeOrder();
+        randomizeOrder(turnedOffOrder);
         // turning on all leds
         digitalWrite(LED_PIN1, HIGH);
         digitalWrite(LED_PIN2, HIGH);
@@ -97,14 +101,8 @@ void loop()
         // change gameState
         gameState = outGame;
         // reset array for new game
-        turnedOffOrder[0] = 0;
-        turnedOffOrder[1] = 0;
-        turnedOffOrder[2] = 0;
-        turnedOffOrder[3] = 0;
-        pressedOrder[0] = 0;
-        pressedOrder[1] = 0;
-        pressedOrder[2] = 0;
-        pressedOrder[3] = 0;
+        flushArray(turnedOffOrder);
+        flushArray(pressedOrder);
         break;
     case inGame:
         // check array lenght by checking if last element is equal 0
@@ -156,27 +154,6 @@ void turnOffLeds()
         }
         delay(/*t2 / N_LED*/ 1000);
     }
-}
-/**
- * Function to create a pseudo-random order to turn off leds
- */
-void randomizeOrder()
-{
-    int i = 1;
-    while (i <= N_LED)
-    {
-        int choise = random(0, N_LED);
-        if (turnedOffOrder[choise] == 0)
-        {
-            turnedOffOrder[choise] = i;
-            i++;
-        }
-    }
-    // print the order on serial line
-    Serial.println(turnedOffOrder[0]);
-    Serial.println(turnedOffOrder[1]);
-    Serial.println(turnedOffOrder[2]);
-    Serial.println(turnedOffOrder[3]);
 }
 
 /**
