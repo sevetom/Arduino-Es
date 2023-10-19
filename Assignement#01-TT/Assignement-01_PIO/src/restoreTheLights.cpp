@@ -24,6 +24,7 @@ void setup() {
         pinMode(buttonLedArr[i].ledPin, OUTPUT);
     }
     pinMode(REDLED, OUTPUT);
+    timerOneInit();
     Serial.begin(9600);
 }
 
@@ -66,20 +67,17 @@ void disableButtonsInterrupt() {
     }
 }
 
-void setTimerOne(unsigned long time, void (*f)()) {
-    Timer1.initialize(time + 300);
-    delayMicroseconds(300);
-    Timer1.attachInterrupt(f);
-}
-
-void resetTimerOne() {
+void timerOneInit() {
+    noInterrupts();
+    Timer1.initialize();
     Timer1.stop();
-    Timer1.detachInterrupt();
+    interrupts();
 }
 
-void restartTimerOne(unsigned long time, void (*f)()) {
-    resetTimerOne();
-    setTimerOne(time, f);
+void setTimerOne(unsigned long time, void (*f)()) {
+    noInterrupts();
+    Timer1.attachInterrupt(f, time);
+    interrupts();
 }
 
 bool avoidButtonsBouncing() {
@@ -104,7 +102,7 @@ void setupStart() {
 void waitingStart() {
     int tmpPotVal = map(analogRead(POTENTIOMETER), POT_MIN, POT_MAX, MIN_DIFF, MAX_DIFF);
     if (potVal != tmpPotVal) {
-        restartTimerOne(SLEEP_TIME, sleep);
+        setTimerOne(SLEEP_TIME, sleep);
         potVal = tmpPotVal;
     }
     analogWrite(REDLED, brightness);
@@ -134,7 +132,9 @@ void restart() {
     disableButtonsInterrupt();
     switchOff();
     generateTimes();
-    resetTimerOne();
+    noInterrupts(); // check
+    Timer1.stop();
+    interrupts();
     digitalWrite(REDLED, HIGH);
     delay(DELAY);
     digitalWrite(REDLED, LOW);
@@ -159,7 +159,6 @@ void startTurningOffLeds() {
 }
 
 void setupTurningOffLeds(int* arr) {
-    resetTimerOne();
     difficulty = 1 - (potVal/10);
     reduceTimes();
     switchGreens(true);

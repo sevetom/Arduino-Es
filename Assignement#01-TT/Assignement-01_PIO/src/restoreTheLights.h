@@ -114,23 +114,16 @@
     void disableButtonsInterrupt();
 
     /**
+     * Initializes the timer one.
+    */
+    void timerOneInit();
+
+    /**
      * Sets the timer one to call the function f after time microseconds.
      * @param time the time in microseconds.
      * @param f the function to be called.
     */
     void setTimerOne(unsigned long time, void (*f)());
-
-    /**
-     * Resets the timer one.
-    */
-    void resetTimerOne();
-
-    /**
-     * Restarts the timer one. 
-     * @param time the time in microseconds.
-     * @param f the function to be called.
-     */
-    void restartTimerOne(unsigned long time, void (*f)());
 
     /**
      * Checks if enough time has passed since the last button press.
