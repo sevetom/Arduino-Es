@@ -71,6 +71,9 @@ void setup()
     enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
     // initialize timer
     Timer1Initialize();
+
+    // initial message on serial line
+    Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
 }
 
 void loop()
@@ -89,12 +92,15 @@ void loop()
         delay(1000);
         turnOffLeds();
         // start timer
+        Serial.println("Go!");
         Timer1setPeriod(goToEndGame, t3 * 1000000);
         // change state
         gameState = inGame;
         break;
     case endGame:
-        showScore();
+        String output = "Game Over. Final Score: " + (String)score + " ";
+        Serial.println(output);
+        score = 0;
         // dissolvenzaStatusLed(); //non va
         stopTimer();
         // change gameState
@@ -117,6 +123,8 @@ void loop()
                 // reduce games timers
                 t2 = t2 - t2 * factor;
                 t3 = t3 - t3 * factor;
+                String output = "New point! Score: " + (String)score + " ";
+                Serial.println(output);
             }
             // change state
             gameState = outGame;
@@ -222,18 +230,8 @@ void insertButton(int n)
  */
 void goToEndGame()
 {
-    Serial.println("fine");
     gameState = endGame;
     pos = 0;
-}
-
-/**
- * Function to show score
- */
-void showScore()
-{
-    // Serial.println("Your score" + score);
-    score = 0;
 }
 
 void dissolvenzaStatusLed()
