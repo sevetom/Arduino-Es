@@ -27,6 +27,8 @@ unsigned long t2;
 unsigned long t3;
 unsigned long prevoiusTime;
 int turnedOffLed;
+int fadeAmount;
+int brightness;
 enum gameState
 {
     inGame,
@@ -55,19 +57,17 @@ void setup()
     prevoiusTime = 0;
     turnedOffLed = 0;
     factor = 0.2;
+    brightness=0;
+    fadeAmount=1;
     gameState = outGame;
     randomSeed(analogRead(4));
-    // azzero registers
-    /*TCCR1A = 0;
-    TCCR1B = 0;
-    TCNT1 = 0;*/
     // attached interrupts on buttons
     enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
     enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
     enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
     enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
     // initialize timer
-    Timer1.initialize();
+    Timer1Initialize();
 }
 
 void loop()
@@ -86,21 +86,25 @@ void loop()
         delay(1000);
         turnOffLeds();
         // start timer
-        createTimer(t3);
+        Timer1setPeriod(goToEndGame, t3 * 1000000);
         // change state
         gameState = inGame;
         break;
     case endGame:
-        // chiama funzione per mostrare punteggio e fare fade del led rosso
         showScore();
-        dissolvenzaStatusLed();
+        //dissolvenzaStatusLed(); //non va
         stopTimer();
+        // change gameState
         gameState = outGame;
+        // reset array for new game
         turnedOffOrder[0] = 0;
         turnedOffOrder[1] = 0;
         turnedOffOrder[2] = 0;
         turnedOffOrder[3] = 0;
-        // stop the timer
+        pressedOrder[0] = 0;
+        pressedOrder[1] = 0;
+        pressedOrder[2] = 0;
+        pressedOrder[3] = 0;
         break;
     case inGame:
         // check array lenght by checking if last element is equal 0
@@ -164,7 +168,6 @@ void randomizeOrder()
         int choise = random(0, N_LED);
         if (turnedOffOrder[choise] == 0)
         {
-            // Serial.println("aaaaa");
             turnedOffOrder[choise] = i;
             i++;
         }
@@ -249,6 +252,27 @@ void goToEndGame()
 }
 
 /**
+ * Function to initialize a timer
+ */
+void Timer1Initialize()
+{
+    noInterrupts();
+    Timer1.initialize();
+    Timer1.stop();
+    interrupts();
+}
+
+/**
+ * Function to set a period and a function interrupt to the timer
+ */
+void Timer1setPeriod(void (*isr)(), unsigned long microseconds)
+{
+    noInterrupts();
+    Timer1.attachInterrupt(isr, microseconds);
+    interrupts();
+}
+
+/**
  * function to create a timer and attach the interrupt
  */
 void createTimer(unsigned long t2)
@@ -280,23 +304,18 @@ void showScore()
 
 void dissolvenzaStatusLed()
 {
-    /*if(fadeMode){
-        if(brightness<255){
-            brightness = brightness + fadeAmount;  // cambia la luminosità attraverso il loop
-        }else{
-            fadeMode=false;
-        }
-    }else{
-        if(brightness>0){
-            rightness = brightness - fadeAmount;  // cambia la luminosità attraverso il loop
-        }else{
-            fadeMode=true;
-        }
+    for (int i = 0; i < 255; i++)
+    {
+        analogWrite(LED_ERRORPIN, brightness);  // imposta la luminosità
+        brightness = brightness + fadeAmount; // cambia la luminosità attraverso il loop
+        delay(100);
     }
-    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità*/
-}
-
-void printHello()
-{
-    Serial.println("hello");
+    for (int i = 0; i < 255; i++)
+    {
+        // Serial.print("Welcome to the Restore the Light Game. Press Key B1 to Start");
+        analogWrite(LED_ERRORPIN, brightness);  // imposta la luminosità
+        brightness = brightness - fadeAmount; // cambia la luminosità attraverso il loop
+        delay(100);
+    }
+    delay(490);
 }
