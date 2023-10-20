@@ -4,7 +4,7 @@
  * @author emanuele.sanchi@studio.unibo.it
  */
 #include <EnableInterrupt.h>
-#include <TimerOne.h>
+#include "utils.h"
 #define LED_PIN1 13
 #define LED_PIN2 12
 #define LED_PIN3 11
@@ -19,14 +19,16 @@
 #define FIXAMOUNT 300
 
 int score;
-int turnedOffOrder[4] = {0, 0, 0, 0};
-int pressedOrder[4] = {0, 0, 0, 0};
+int *turnedOffOrder = (int[]){0, 0, 0, 0};
+int *pressedOrder = (int[]){0, 0, 0, 0};
 int pos;
 float factor;
 unsigned long t2;
 unsigned long t3;
 unsigned long prevoiusTime;
 int turnedOffLed;
+int fadeAmount;
+int brightness;
 enum gameState
 {
     inGame,
@@ -55,19 +57,23 @@ void setup()
     prevoiusTime = 0;
     turnedOffLed = 0;
     factor = 0.2;
+    brightness = 0;
+    fadeAmount = 1;
     gameState = outGame;
+    // initialize array
+    flushArray(turnedOffOrder);
+    flushArray(pressedOrder);
     randomSeed(analogRead(4));
-    // azzero registers
-    /*TCCR1A = 0;
-    TCCR1B = 0;
-    TCNT1 = 0;*/
     // attached interrupts on buttons
     enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
     enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
     enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
     enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
     // initialize timer
-    Timer1.initialize();
+    Timer1Initialize();
+
+    // initial message on serial line
+    Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
 }
 
 void loop()
@@ -76,7 +82,7 @@ void loop()
     {
     case outGame:
         // randomize order of leds' turning off
-        randomizeOrder();
+        randomizeOrder(turnedOffOrder);
         // turning on all leds
         digitalWrite(LED_PIN1, HIGH);
         digitalWrite(LED_PIN2, HIGH);
@@ -86,21 +92,22 @@ void loop()
         delay(1000);
         turnOffLeds();
         // start timer
-        createTimer(t3);
+        Serial.println("Go!");
+        Timer1setPeriod(goToEndGame, t3 * 1000000);
         // change state
         gameState = inGame;
         break;
     case endGame:
-        // chiama funzione per mostrare punteggio e fare fade del led rosso
-        showScore();
-        dissolvenzaStatusLed();
+        String output = "Game Over. Final Score: " + (String)score + " ";
+        Serial.println(output);
+        score = 0;
+        // dissolvenzaStatusLed(); //non va
         stopTimer();
+        // change gameState
         gameState = outGame;
-        turnedOffOrder[0] = 0;
-        turnedOffOrder[1] = 0;
-        turnedOffOrder[2] = 0;
-        turnedOffOrder[3] = 0;
-        // stop the timer
+        // reset array for new game
+        flushArray(turnedOffOrder);
+        flushArray(pressedOrder);
         break;
     case inGame:
         // check array lenght by checking if last element is equal 0
@@ -116,6 +123,8 @@ void loop()
                 // reduce games timers
                 t2 = t2 - t2 * factor;
                 t3 = t3 - t3 * factor;
+                String output = "New point! Score: " + (String)score + " ";
+                Serial.println(output);
             }
             // change state
             gameState = outGame;
@@ -152,28 +161,6 @@ void turnOffLeds()
         }
         delay(/*t2 / N_LED*/ 1000);
     }
-}
-/**
- * Function to create a pseudo-random order to turn off leds
- */
-void randomizeOrder()
-{
-    int i = 1;
-    while (i <= N_LED)
-    {
-        int choise = random(0, N_LED);
-        if (turnedOffOrder[choise] == 0)
-        {
-            // Serial.println("aaaaa");
-            turnedOffOrder[choise] = i;
-            i++;
-        }
-    }
-    // print the order on serial line
-    Serial.println(turnedOffOrder[0]);
-    Serial.println(turnedOffOrder[1]);
-    Serial.println(turnedOffOrder[2]);
-    Serial.println(turnedOffOrder[3]);
 }
 
 /**
@@ -243,60 +230,24 @@ void insertButton(int n)
  */
 void goToEndGame()
 {
-    Serial.println("fine");
     gameState = endGame;
     pos = 0;
 }
 
-/**
- * function to create a timer and attach the interrupt
- */
-void createTimer(unsigned long t2)
-{
-    Timer1.detachInterrupt();
-    noInterrupts();
-    Timer1.setPeriod(t2 * 1000000);
-    interrupts();
-    Timer1.attachInterrupt(goToEndGame);
-}
-
-/**
- * funtcion to stop the timer and detach the interrupt
- */
-void stopTimer()
-{
-    Timer1.stop();
-    Timer1.detachInterrupt();
-}
-
-/**
- * Function to show score
- */
-void showScore()
-{
-    // Serial.println("Your score" + score);
-    score = 0;
-}
-
 void dissolvenzaStatusLed()
 {
-    /*if(fadeMode){
-        if(brightness<255){
-            brightness = brightness + fadeAmount;  // cambia la luminosità attraverso il loop
-        }else{
-            fadeMode=false;
-        }
-    }else{
-        if(brightness>0){
-            rightness = brightness - fadeAmount;  // cambia la luminosità attraverso il loop
-        }else{
-            fadeMode=true;
-        }
+    for (int i = 0; i < 255; i++)
+    {
+        analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
+        brightness = brightness + fadeAmount;  // cambia la luminosità attraverso il loop
+        delay(100);
     }
-    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità*/
-}
-
-void printHello()
-{
-    Serial.println("hello");
+    for (int i = 0; i < 255; i++)
+    {
+        // Serial.print("Welcome to the Restore the Light Game. Press Key B1 to Start");
+        analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
+        brightness = brightness - fadeAmount;  // cambia la luminosità attraverso il loop
+        delay(100);
+    }
+    delay(490);
 }
