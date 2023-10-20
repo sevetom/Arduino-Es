@@ -5,11 +5,13 @@
  */
 #include <EnableInterrupt.h>
 #include <TimerOne.h>
+#include <avr/sleep.h>
+#include <avr/power.h>
 #define LED_PIN1 13
 #define LED_PIN2 12
 #define LED_PIN3 11
 #define LED_PIN4 10
-#define LED_ERRORPIN 9
+#define LED_ERRORPIN 3
 #define BUTTON_PIN1 7
 #define BUTTON_PIN2 6
 #define BUTTON_PIN3 5
@@ -17,13 +19,16 @@
 #define POT_PIN A0
 #define N_LED 4
 #define FIXAMOUNT 300
+const int T1 = 1;
+const int T2 = 4;
+const int T3 = 5;
 
+int times;
 int score;
 int turnedOffOrder[4] = {0, 0, 0, 0};
 int pressedOrder[4] = {0, 0, 0, 0};
 int pos;
 float factor;
-int t1;
 int t2;
 int t3;
 int milliSecondsMultiplier;
@@ -34,6 +39,7 @@ int fadeAmount;
 int brightness;
 volatile enum gameState
 {
+    preGame,
     inGame,
     outGame,
     endGame,
@@ -54,35 +60,43 @@ void setup()
     pinMode(BUTTON_PIN4, INPUT);
     pinMode(LED_ERRORPIN, OUTPUT);
     // initialize variables for timing and gloabl counters
+    times = 0;
     score = 0;
     pos = 0;
-    t1 = 1;
-    t2 = 4;
-    t3 = 5;
+    t2 = T2;
+    t3 = T3;
     milliSecondsMultiplier = 1000;
     microsecondMultiplier = 1000000;
     fadeAmount = 5;
     brightness = 0;
-    prevoiusTime = 0;
+    prevoiusTime = millis();
     turnedOffLed = 0;
-    factor = 0.2;
-    gameState = outGame;
+    factor = 0.1;
+    gameState = preGame;
     randomSeed(analogRead(4));
-    // attached interrupts on buttons
-    enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
-    enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
-    enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
-    enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
     // initialize timer
     Timer1initialize();
+    // attached interrupts on buttons
+    enterPreGame();
 }
 
 void loop()
 {
-    Serial.println(gameState);
     switch (gameState)
     {
+    case preGame:
+        //led red start blinking
+        dissolvenzaStatusLed();
+        break;
     case outGame:
+        pressedOrder[0] = 0;
+        pressedOrder[1] = 0;
+        pressedOrder[2] = 0;
+        pressedOrder[3] = 0;
+        turnedOffOrder[0] = 0;
+        turnedOffOrder[1] = 0;
+        turnedOffOrder[2] = 0;
+        turnedOffOrder[3] = 0;
         // randomize order of leds' turning off
         randomizeOrder();
         // turning on all leds
@@ -91,27 +105,34 @@ void loop()
         digitalWrite(LED_PIN3, HIGH);
         digitalWrite(LED_PIN4, HIGH);
         // wait 1 second to starting turning off leds
-        delay(1*milliSecondsMultiplier);
+        delay(T1*milliSecondsMultiplier);
         turnOffLeds();
         // start timer
-        Timer1setPeriod(goToEndGame, 3000000);
-        //TODO: remove the line below
-        //createTimer(t3);
+        Timer1setPeriod(goToEndGame, 5000000);
         // change state
-        //gameState = inGame;
-        gameState = prova;
+        enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
+        enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
+        enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
+        enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
+        gameState = inGame;
         break;
     case endGame:
+        disableInterrupt(BUTTON_PIN1);
+        disableInterrupt(BUTTON_PIN2);
+        disableInterrupt(BUTTON_PIN3);
+        disableInterrupt(BUTTON_PIN4);
+        
         // chiama funzione per mostrare punteggio e fare fade del led rosso
-        showScore();
-        //dissolvenzaStatusLed();
+        Serial.print("Game Over. Final score = ");
+        Serial.println(score);
+        score = 0;
+        t2 = T2;
+        t3 = T3;
         //stopTimer();
-        turnedOffOrder[0] = 0;
-        turnedOffOrder[1] = 0;
-        turnedOffOrder[2] = 0;
-        turnedOffOrder[3] = 0;
-        delay(1 * milliSecondsMultiplier);
-        gameState = outGame;
+        digitalWrite(LED_ERRORPIN, HIGH);
+        delay(10 * milliSecondsMultiplier);
+        enterPreGame();
+        gameState = preGame;
         break;
     case inGame:
         // check array lenght by checking if last element is equal 0
@@ -124,17 +145,81 @@ void loop()
             if (gameState == inGame)
             {
                 score++;
+                showScore();
                 // reduce games timers
                 t2 = t2 - t2 * factor;
                 t3 = t3 - t3 * factor;
+                // change state
+                gameState = outGame;
             }
-            // change state
-            gameState = outGame;
         }
         break;
     default:
         break;
     }
+}
+
+void goToSleep(){
+    times++;
+    if (times == 2){
+        //attacca gli interrupt per svegliare e vai a dormire
+        disableInterrupt(BUTTON_PIN1);
+        disableInterrupt(BUTTON_PIN2);
+        disableInterrupt(BUTTON_PIN3);
+        disableInterrupt(BUTTON_PIN4);
+        enableInterrupt(BUTTON_PIN1, wakeUp, CHANGE);
+        enableInterrupt(BUTTON_PIN2, wakeUp, CHANGE);
+        enableInterrupt(BUTTON_PIN3, wakeUp, CHANGE);
+        enableInterrupt(BUTTON_PIN4, wakeUp, CHANGE);
+        sleep();
+        times = 0;
+        enterPreGame();
+    }else{
+        Serial.println("ciao");
+        Timer1setPeriod(goToSleep, 5*microsecondMultiplier);
+    }
+}
+
+void wakeUp(){
+  Serial.println("svegliato");
+}
+
+void sleep(){
+    /*set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_enable();
+    power_adc_disable();
+    power_spi_disable();
+    power_timer0_disable(); // only timer 1 to 
+    power_timer2_disable(); // not reinitialize it
+    power_twi_disable();
+    sleep_mode();
+    //in this point arduino wake up
+    Serial.println("wake up");
+    sleep_disable();
+    power_all_enable();*/
+}
+
+void enterPreGame(){
+    disableInterrupt(BUTTON_PIN1);
+    enableInterrupt(BUTTON_PIN1, startGame, CHANGE);
+    Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
+    //set timer to deepSleep
+    //Timer1setPeriod(goToSleep, 5*microsecondMultiplier);
+}
+
+void startGame(){
+    stopTimer();
+    times = 0;
+    digitalWrite(LED_ERRORPIN, LOW);
+    disableInterrupt(BUTTON_PIN1);
+    disableInterrupt(BUTTON_PIN2);
+    disableInterrupt(BUTTON_PIN3);
+    disableInterrupt(BUTTON_PIN4);
+    /*enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
+    enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
+    enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
+    enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);*/
+    gameState = outGame;
 }
 
 void Timer1initialize(){
@@ -146,7 +231,6 @@ void Timer1initialize(){
 
 void Timer1setPeriod(void (*isr)(),unsigned long microseconds){
     noInterrupts();
-    //Timer1.restart();
     Timer1.setPeriod(microseconds);
     Timer1.attachInterrupt(isr);
     interrupts();
@@ -258,6 +342,7 @@ void button4pressed()
  */
 void insertButton(int n)
 {
+    Serial.println("inseetButton");
     // check for bouncing of phisical buttons
     if (millis() - prevoiusTime > FIXAMOUNT)
     {
@@ -280,18 +365,6 @@ void goToEndGame()
 }
 
 /**
- * function to create a timer and attach the interrupt
- */
-void createTimer(unsigned long t2)
-{
-    Timer1.detachInterrupt();
-    noInterrupts();
-    Timer1.setPeriod(t2 * 1000000);
-    interrupts();
-    Timer1.attachInterrupt(goToEndGame);
-}
-
-/**
  * funtcion to stop the timer and detach the interrupt
  */
 void stopTimer()
@@ -305,18 +378,18 @@ void stopTimer()
  */
 void showScore()
 {
-    Serial.print("Your score = ");
+    Serial.print("New point. Score = ");
     Serial.println(score);
-    score = 0;
 }
 
 void dissolvenzaStatusLed()
 {
-    if(brightness < 0 || brightness > 255){
+    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
+    brightness = brightness + fadeAmount;
+    if(brightness == 0 || brightness == 255){
         fadeAmount = -fadeAmount;
     }
-    brightness = brightness + fadeAmount;
-    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
+    delay(30);
     /*
     if(fadeMode){
         if(brightness<255){
