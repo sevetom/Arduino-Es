@@ -126,6 +126,11 @@
     void setTimerOne(unsigned long time, void (*f)());
 
     /**
+     * Stops the timer one.
+    */
+    void stopTimerOne();
+
+    /**
      * Checks if enough time has passed since the last button press.
     */
     bool avoidButtonsBouncing();

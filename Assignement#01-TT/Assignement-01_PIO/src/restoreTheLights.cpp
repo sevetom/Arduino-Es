@@ -72,12 +72,23 @@ void timerOneInit() {
     Timer1.initialize();
     Timer1.stop();
     interrupts();
+    Serial.print("Timer One Initialized");
+    Serial.println(millis());
 }
 
 void setTimerOne(unsigned long time, void (*f)()) {
     noInterrupts();
     Timer1.attachInterrupt(f, time);
     interrupts();
+}
+
+void stopTimerOne() {
+    noInterrupts();
+    Timer1.stop();
+    Timer1.detachInterrupt();
+    interrupts();
+    Serial.print("Timer One Stopped");
+    Serial.println(millis());
 }
 
 bool avoidButtonsBouncing() {
@@ -132,9 +143,6 @@ void restart() {
     disableButtonsInterrupt();
     switchOff();
     generateTimes();
-    noInterrupts(); // check
-    Timer1.stop();
-    interrupts();
     digitalWrite(REDLED, HIGH);
     delay(DELAY);
     digitalWrite(REDLED, LOW);
@@ -215,6 +223,7 @@ void switchGreens(bool state) {
 void switchOff() {
     switchGreens(false);
     digitalWrite(REDLED, LOW);
+    stopTimerOne();
     Serial.flush();
 }
 
@@ -251,7 +260,7 @@ void sleep() {
     Serial.println("GOING TO POWER DOWN IN 1 SECOND...");
     delay(DELAY);
     switchOff();
-    setConcurrentState(sleeping); //!IMPORTANT
+    setConcurrentState(sleeping);
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
     enableButtonsInterrupt(wakeUp);
@@ -262,7 +271,8 @@ void sleep() {
 }
 
 void wakeUp() {
-    Serial.println("WAKING UP...");
-    prevts = millis();
-    state = settingUp;
+    if (avoidButtonsBouncing()) {
+        Serial.println("WAKING UP...");
+        state = settingUp;
+    }
 }
