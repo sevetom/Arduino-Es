@@ -79,8 +79,6 @@ void setTimerOne(unsigned long time, void (*f)()) {
     Timer1.attachInterrupt(f, time);
     interrupts();
     timerSet = millis();
-    Serial.print("Timer One Set: ");
-    Serial.println(timerSet);
 }
 
 void stopTimerOne() {
@@ -88,13 +86,16 @@ void stopTimerOne() {
     Timer1.stop();
     Timer1.detachInterrupt();
     interrupts();
-    Serial.print("Timer One Stopped: ");
-    Serial.println(millis());
+}
+
+void restartTimerOne(unsigned long time, void (*f)()) {
+    stopTimerOne();
+    setTimerOne(time, f);
 }
 
 bool avoidButtonsBouncing() {
     long ts = millis();
-    if (ts - prevts > 40) {
+    if (ts - prevts > 100) {
         prevts = ts;
         return true;
     }
@@ -102,7 +103,7 @@ bool avoidButtonsBouncing() {
 }
 
 void setupStart() {
-    potVal = 0;
+    potVal = map(analogRead(POTENTIOMETER), POT_MIN, POT_MAX, MIN_DIFF, MAX_DIFF);
     brightness = 0;
     fadeAmount = FADE;
     Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
@@ -112,9 +113,14 @@ void setupStart() {
 }
 
 void waitingStart() {
-    int tmpPotVal = map(analogRead(POTENTIOMETER), POT_MIN, POT_MAX, MIN_DIFF, MAX_DIFF);
+    float tmp = analogRead(POTENTIOMETER);
+    float tmpPotVal = map(tmp, POT_MIN, POT_MAX, MIN_DIFF, MAX_DIFF);
     if (potVal != tmpPotVal) {
-        setTimerOne(SLEEP_TIME, checkSleepTime);
+        restartTimerOne(SLEEP_TIME, checkSleepTime);
+        Serial.print("Difficulty changed: ");
+        Serial.print(tmpPotVal);
+        Serial.print(" | With potentiometer: ");
+        Serial.println(tmp);
         potVal = tmpPotVal;
     }
     analogWrite(REDLED, brightness);
@@ -128,6 +134,7 @@ void waitingStart() {
 void startGame() {
     if (avoidButtonsBouncing()) {
         switchOff();
+        disableInterrupt(buttonLedArr[0].buttonPin);
         Serial.println("Go!");
         score = 0;
         setConcurrentState(showingOrder);
@@ -162,7 +169,7 @@ void startTurningOffLeds() {
         buttonLedArr[arr[i]].turn = i;
     }
     currentTurn = COUPLES-1;
-    setTimerOne(times[2] * 1000000, timeOut);
+    restartTimerOne(times[2] * 1000, timeOut);
     enableButtonsInterrupt(buttonPressed);
     state = waitingPlayer;
 }
@@ -195,6 +202,7 @@ void buttonPressed() {
                     correctGuess(i);
                 } else {
                     state = madeMistake;
+                    Serial.println("Mistake!");
                 }
                 break;
             }
@@ -246,14 +254,22 @@ bool isPresent(int *arr, int num) {
 }
 
 void generateTimes() {
+    long timeInc = 0;
     for (int i = 0; i < TIMERS; i++) {
-        times[i] = (int)randomFloat((float)MIN_TIME, (float)MAX_TIME);
+        times[i] = (int)randomFloat((float)MIN_TIME + timeInc, (float)MAX_TIME + timeInc);
+        timeInc += TIME_INCREASE;
     }
 }
 
 void reduceTimes() {
     for (int i = 1; i < TIMERS; i++) {
         times[i] *= difficulty;
+        Serial.print("Time ");
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.print(times[i]);
+        Serial.print(" | Difficulty: ");
+        Serial.println(difficulty);
     }
 }
 
@@ -272,8 +288,9 @@ void sleep() {
 }
 
 void checkSleepTime() {
-    if (millis() - timerSet < SLEEP_TIME) {
-        setTimerOne(millis() - timerSet, sleep);
+    long timePassed = (millis() - timerSet) * 1000;
+    if (timePassed < SLEEP_TIME) {
+        restartTimerOne(SLEEP_TIME - timePassed, sleep);
     } else {
         sleep();
     }

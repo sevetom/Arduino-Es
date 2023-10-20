@@ -50,8 +50,8 @@
     #define MISTAKE_TIME 10 * 1000
     /* This are not standard potentiometer values but
         the one we are using is of really poor quality */
-    #define POT_MIN 23
-    #define POT_MAX 1001
+    #define POT_MIN 20
+    #define POT_MAX 900
     // Levels of difficulty of the game
     #define MIN_DIFF 1
     #define MAX_DIFF 4
@@ -242,6 +242,11 @@
     */
     void wakeUp();
 
+    /**
+     * TODO
+    */
+    void restartTimerOne(unsigned long time, void (*f)());
+
     // The state the game is currently in
     volatile gameState state;
     // The led that should be lit next while playing
@@ -254,7 +259,7 @@
     float score;
     float difficulty;
     // Used to maintain the potentiometer value
-    int potVal;
+    float potVal;
     // Used to maintain the brightness of the red led
     int brightness;
     // Used to maintain the amount of light the red led is shifting
