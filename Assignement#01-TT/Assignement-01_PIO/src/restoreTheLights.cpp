@@ -72,14 +72,14 @@ void timerOneInit() {
     Timer1.initialize();
     Timer1.stop();
     interrupts();
-    Serial.print("Timer One Initialized");
-    Serial.println(millis());
 }
 
 void setTimerOne(unsigned long time, void (*f)()) {
     noInterrupts();
     Timer1.attachInterrupt(f, time);
     interrupts();
+    Serial.print("Timer One Set: ");
+    Serial.println(millis());
 }
 
 void stopTimerOne() {
@@ -87,7 +87,7 @@ void stopTimerOne() {
     Timer1.stop();
     Timer1.detachInterrupt();
     interrupts();
-    Serial.print("Timer One Stopped");
+    Serial.print("Timer One Stopped: ");
     Serial.println(millis());
 }
 
