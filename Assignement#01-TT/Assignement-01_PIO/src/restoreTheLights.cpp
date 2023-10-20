@@ -78,6 +78,18 @@ void setTimerOne(unsigned long time, void (*f)()) {
     noInterrupts();
     Timer1.attachInterrupt(f, time);
     interrupts();
+    timerSet = millis();
+    Serial.print("Timer One Set: ");
+    Serial.println(timerSet);
+}
+
+void stopTimerOne() {
+    noInterrupts();
+    Timer1.stop();
+    Timer1.detachInterrupt();
+    interrupts();
+    Serial.print("Timer One Stopped: ");
+    Serial.println(millis());
 }
 
 bool avoidButtonsBouncing() {
@@ -95,14 +107,14 @@ void setupStart() {
     fadeAmount = FADE;
     Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
     enableInterrupt(buttonLedArr[0].buttonPin, startGame, RISING);
-    setTimerOne(SLEEP_TIME, sleep);
+    setTimerOne(SLEEP_TIME, checkSleepTime);
     state = starting;
 }
 
 void waitingStart() {
     int tmpPotVal = map(analogRead(POTENTIOMETER), POT_MIN, POT_MAX, MIN_DIFF, MAX_DIFF);
     if (potVal != tmpPotVal) {
-        setTimerOne(SLEEP_TIME, sleep);
+        setTimerOne(SLEEP_TIME, checkSleepTime);
         potVal = tmpPotVal;
     }
     analogWrite(REDLED, brightness);
@@ -132,9 +144,6 @@ void restart() {
     disableButtonsInterrupt();
     switchOff();
     generateTimes();
-    noInterrupts(); // check
-    Timer1.stop();
-    interrupts();
     digitalWrite(REDLED, HIGH);
     delay(DELAY);
     digitalWrite(REDLED, LOW);
@@ -215,6 +224,7 @@ void switchGreens(bool state) {
 void switchOff() {
     switchGreens(false);
     digitalWrite(REDLED, LOW);
+    stopTimerOne();
     Serial.flush();
 }
 
@@ -251,7 +261,7 @@ void sleep() {
     Serial.println("GOING TO POWER DOWN IN 1 SECOND...");
     delay(DELAY);
     switchOff();
-    setConcurrentState(sleeping); //!IMPORTANT
+    setConcurrentState(sleeping);
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
     enableButtonsInterrupt(wakeUp);
@@ -261,8 +271,17 @@ void sleep() {
     Serial.flush();
 }
 
+void checkSleepTime() {
+    if (millis() - timerSet < SLEEP_TIME) {
+        setTimerOne(millis() - timerSet, sleep);
+    } else {
+        sleep();
+    }
+}
+
 void wakeUp() {
-    Serial.println("WAKING UP...");
-    prevts = millis();
-    state = settingUp;
+    if (avoidButtonsBouncing()) {
+        Serial.println("WAKING UP...");
+        state = settingUp;
+    }
 }
