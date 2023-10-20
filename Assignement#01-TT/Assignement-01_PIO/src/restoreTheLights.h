@@ -233,6 +233,11 @@
     void sleep();
 
     /**
+     * Checks if the time the timer was set to has passsed before sleeping.
+    */
+    void checkSleepTime();
+
+    /**
      * Wakes up the arduino.
     */
     void wakeUp();
@@ -243,6 +248,8 @@
     volatile int currentTurn;
     // Used to maintain the current time to avoid buttons bouncing
     volatile long prevts;
+    // Used to maintain the time in which the timer started
+    volatile long timerSet;
     buttonLed buttonLedArr[COUPLES];
     float score;
     float difficulty;
