@@ -1,7 +1,6 @@
 #include <avr/sleep.h>
 #include <avr/power.h>
 #include <Arduino.h>
-
 /**
  * Function to enter in sleep mode
  */

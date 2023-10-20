@@ -2,21 +2,21 @@
 
 void sleep()
 {
+    delay(1000);
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
-    power_adc_disable();
+    /*power_adc_disable();
     power_spi_disable();
     power_timer0_disable(); // only timer 1 to
     power_timer2_disable(); // not reinitialize it
-    power_twi_disable();
+    power_twi_disable();*/
     sleep_mode();
     // in this point arduino wake up
-    Serial.println("wake up");
     sleep_disable();
-    power_all_enable();
+    //power_all_enable();
 }
 
 void wakeUp()
 {
-    Serial.println("svegliato");
+    Serial.println("Waking up");
 }

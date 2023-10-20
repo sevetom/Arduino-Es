@@ -15,5 +15,7 @@ void Timer1setPeriod(void (*isr)(), unsigned long microseconds);
  */
 void stopTimer();
 
-/**Function to restart a timer*/
+/**
+ *Function to restart a timer
+ */
 void restartTime(unsigned long time, void (*f)());

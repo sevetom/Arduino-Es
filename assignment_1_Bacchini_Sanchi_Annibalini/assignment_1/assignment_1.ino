@@ -3,19 +3,20 @@
  * @author lorenzo.bacchini4@studio.unibo.it
  * @author emanuele.sanchi@studio.unibo.it
  */
-#include <EnableInterrupt.h>
+
 #include "utils.h"
 #include "timer.h"
 #include "powerManager.h"
+#include <EnableInterrupt.h>
+#define BUTTON_PIN1 7
+#define BUTTON_PIN2 6
+#define BUTTON_PIN3 5
+#define BUTTON_PIN4 4
 #define LED_PIN1 13
 #define LED_PIN2 12
 #define LED_PIN3 11
 #define LED_PIN4 10
 #define LED_ERRORPIN 3
-#define BUTTON_PIN1 7
-#define BUTTON_PIN2 6
-#define BUTTON_PIN3 5
-#define BUTTON_PIN4 4
 #define POT_PIN A0
 #define N_LED 4
 #define FIXAMOUNT 300
@@ -84,6 +85,7 @@ void setup()
 
 void loop()
 {
+    Serial.print(times);
     switch (gameState)
     {
     case preGame:
@@ -265,7 +267,7 @@ void goToEndGame()
  */
 void startGame()
 {
-    stopTimer();
+    restartTime(5 * microsecondMultiplier, goToSleep);
     prevoiusTime = millis();
     digitalWrite(LED_ERRORPIN, LOW);
     disableInterrupt(BUTTON_PIN1);
@@ -304,12 +306,14 @@ void goToSleep()
         disableInterrupt(BUTTON_PIN2);
         disableInterrupt(BUTTON_PIN3);
         disableInterrupt(BUTTON_PIN4);
-        enableInterrupt(BUTTON_PIN1, wakeUp, CHANGE);
-        enableInterrupt(BUTTON_PIN2, wakeUp, CHANGE);
-        enableInterrupt(BUTTON_PIN3, wakeUp, CHANGE);
-        enableInterrupt(BUTTON_PIN4, wakeUp, CHANGE);
+        enableInterrupt(BUTTON_PIN1, wakeUp, RISING);
+        enableInterrupt(BUTTON_PIN2, wakeUp, RISING);
+        enableInterrupt(BUTTON_PIN3, wakeUp, RISING);
+        enableInterrupt(BUTTON_PIN4, wakeUp, RISING);
+        Serial.println("vado in sleep");
         sleep();
         times = 0;
+        Serial.println
         enterPreGame();
     }
     else

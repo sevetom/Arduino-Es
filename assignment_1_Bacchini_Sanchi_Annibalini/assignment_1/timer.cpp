@@ -21,8 +21,8 @@ void stopTimer()
     Timer1.detachInterrupt();
 }
 
-void restartTime(unsigned long time, void (*f)())
+void restartTime(unsigned long time, void (*isr)())
 {
     stopTimer();
-    Timer1setPeriod(time, f);
+    Timer1setPeriod(time, isr);
 }
