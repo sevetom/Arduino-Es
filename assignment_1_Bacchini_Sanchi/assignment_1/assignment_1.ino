@@ -3,10 +3,11 @@
  * @author lorenzo.bacchini4@studio.unibo.it
  * @author emanuele.sanchi@studio.unibo.it
  */
+#include <TimerOne.h>
+#include <avr/sleep.h>
+#include <avr/power.h>
 #include <EnableInterrupt.h>
-#include "utils.h"
-#include "timer.h"
-#include "powerManager.h"
+#define N_LED 4
 #define LED_PIN1 13
 #define LED_PIN2 12
 #define LED_PIN3 11
@@ -36,14 +37,13 @@ unsigned long prevoiusTime;
 int turnedOffLed;
 int fadeAmount;
 int brightness;
-int times;
-
 volatile enum gameState {
     preGame,
     inGame,
     outGame,
     endGame,
 } gameState;
+int times;
 
 void setup()
 {
@@ -68,7 +68,6 @@ void setup()
     factor = 0.2;
     brightness = 0;
     fadeAmount = 5;
-    times = 0;
     milliSecondsMultiplier = 1000;
     microsecondMultiplier = 1000000;
     gameState = preGame;
@@ -87,7 +86,7 @@ void loop()
     switch (gameState)
     {
     case preGame:
-        // led red start blinking
+        //led red start blinking
         dissolvenzaStatusLed();
         break;
     case outGame:
@@ -178,6 +177,82 @@ void turnOffLeds()
     }
 }
 
+
+void dissolvenzaStatusLed()
+{
+    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
+    brightness = brightness + fadeAmount;
+    if(brightness == 0 || brightness == 255){
+        fadeAmount = -fadeAmount;
+    }
+    delay(30);
+}
+
+/**
+ * Function to create a pseudo-random order to turn off leds
+ */
+void randomizeOrder(int turnedOffOrder[])
+{
+    int i = 1;
+    while (i <= N_LED)
+    {
+        int choise = random(0, N_LED);
+        if (turnedOffOrder[choise] == 0)
+        {
+            turnedOffOrder[choise] = i;
+            i++;
+        }
+    }
+    // print the order on serial line
+    Serial.println(turnedOffOrder[0]);
+    Serial.println(turnedOffOrder[1]);
+    Serial.println(turnedOffOrder[2]);
+    Serial.println(turnedOffOrder[3]);
+}
+
+/**
+ * Function to flush an array of 4 elements
+ */
+void flushArray(int *array)
+{
+    array[0] = 0;
+    array[1] = 0;
+    array[2] = 0;
+    array[3] = 0;
+}
+
+/**
+ * Function to initialize a timer
+ */
+void Timer1Initialize()
+{
+    noInterrupts();
+    Timer1.initialize();
+    Timer1.stop();
+    interrupts();
+}
+
+/**
+ * Function to set a period and a function interrupt to the timer
+ */
+void Timer1setPeriod(void (*isr)(), unsigned long microseconds)
+{
+    noInterrupts();
+    Timer1.attachInterrupt(isr, microseconds);
+    interrupts();
+}
+
+/**
+ * funtcion to stop the timer and detach the interrupt
+ */
+void stopTimer()
+{
+    noInterrupts();
+    Timer1.stop();
+    Timer1.detachInterrupt();
+    interrupts();
+}
+
 /**
  * Function to check if the order of pressed buttons is right
  */
@@ -191,6 +266,21 @@ void checkPressOrder()
         }
     }
     pos = 0;
+}
+
+/**
+ * Function to insert the pressed button into the array
+ */
+void insertButton(int n)
+{
+    // check for bouncing of phisical buttons
+    if (millis() - prevoiusTime > FIXAMOUNT)
+    {
+        pressedOrder[pos] = n;
+        Serial.println(pressedOrder[pos]);
+        prevoiusTime = millis();
+        pos++;
+    }
 }
 
 /**
@@ -226,32 +316,6 @@ void button4pressed()
 }
 
 /**
- * Function to insert the pressed button into the array
- */
-void insertButton(int n)
-{
-    // check for bouncing of phisical buttons
-    if (millis() - prevoiusTime > FIXAMOUNT)
-    {
-        pressedOrder[pos] = n;
-        Serial.println(pressedOrder[pos]);
-        prevoiusTime = millis();
-        pos++;
-    }
-}
-
-void dissolvenzaStatusLed()
-{
-    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
-    brightness = brightness + fadeAmount;
-    if (brightness == 0 || brightness == 255)
-    {
-        fadeAmount = -fadeAmount;
-    }
-    delay(30);
-}
-
-/**
  * function to end the game after the timeout
  */
 void goToEndGame()
@@ -260,9 +324,6 @@ void goToEndGame()
     pos = 0;
 }
 
-/**
- * Function to start a new game
- */
 void startGame()
 {
     stopTimer();
@@ -279,9 +340,22 @@ void startGame()
     gameState = outGame;
 }
 
-/**
- * Function to change state and go in pre game so initialize variables for a new game
- */
+void sleep()
+{
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_enable();
+    power_adc_disable();
+    power_spi_disable();
+    power_timer0_disable(); // only timer 1 to
+    power_timer2_disable(); // not reinitialize it
+    power_twi_disable();
+    sleep_mode();
+    // in this point arduino wake up
+    Serial.println("wake up");
+    sleep_disable();
+    power_all_enable();
+}
+
 void enterPreGame()
 {
     disableInterrupt(BUTTON_PIN1);
@@ -291,9 +365,11 @@ void enterPreGame()
     Timer1setPeriod(goToSleep, 5 * microsecondMultiplier);
 }
 
-/**
- * Function to change state into sleep mode
- */
+void wakeUp()
+{
+    Serial.println("svegliato");
+}
+
 void goToSleep()
 {
     times++;
