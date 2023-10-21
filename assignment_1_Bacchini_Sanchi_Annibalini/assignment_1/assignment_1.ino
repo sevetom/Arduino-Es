@@ -94,6 +94,8 @@ void loop()
         dissolvenzaStatusLed();
         break;
     case outGame:
+        flushArray(turnedOffOrder);
+        flushArray(pressedOrder);
         // randomize order of leds' turning off
         randomizeOrder(turnedOffOrder);
         // turning on all leds
@@ -143,10 +145,10 @@ void loop()
                 t2 = t2 - t2 * factor;
                 t3 = t3 - t3 * factor;
                 output = "New point! Score: " + (String)score + " ";
-                Serial.println(output);
+                Serial.println(output);        
+                // change state
+                gameState = outGame;
             }
-            // change state
-            gameState = outGame;
         }
         break;
     case sleepMode:
