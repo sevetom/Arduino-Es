@@ -24,5 +24,5 @@ void stopTimer()
 void restartTime(unsigned long time, void (*isr)())
 {
     stopTimer();
-    Timer1setPeriod(time, isr);
+    Timer1setPeriod(isr, time);
 }
