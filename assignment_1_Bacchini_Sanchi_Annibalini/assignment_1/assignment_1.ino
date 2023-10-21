@@ -29,8 +29,8 @@ int *turnedOffOrder = (int[]){0, 0, 0, 0};
 int *pressedOrder = (int[]){0, 0, 0, 0};
 int pos;
 float factor;
-unsigned long t2;
-unsigned long t3;
+float t2;
+float t3;
 unsigned long milliSecondsMultiplier;
 unsigned long microsecondMultiplier;
 unsigned long prevoiusTime;
@@ -133,7 +133,6 @@ void loop()
         // check array lenght by checking if last element is equal 0
         if (pressedOrder[3] != 0)
         {
-            Serial.println("entrato");
             // stop the timer
             stopTimer();
             // check pressed button order
@@ -142,8 +141,8 @@ void loop()
             {
                 score++;
                 // reduce games timers
-                t2 = t2 - t2 * factor;
-                t3 = t3 - t3 * factor;
+                t2 = t2 - (t2 * factor);
+                t3 = t3 - (t3 * factor);
                 output = "New point! Score: " + (String)score + " ";
                 Serial.println(output);        
                 // change state
@@ -191,7 +190,7 @@ void turnOffLeds()
             digitalWrite(LED_PIN4, LOW);
             break;
         }
-        delay(/*t2 / N_LED*/ 1000);
+        delay((t2 / N_LED) * 1000);
     }
 }
 
