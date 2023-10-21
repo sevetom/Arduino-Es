@@ -44,6 +44,7 @@ volatile enum gameState {
     inGame,
     outGame,
     endGame,
+    sleepMode
 } gameState;
 
 void setup()
@@ -85,7 +86,16 @@ void setup()
 
 void loop()
 {
-    Serial.print(times);
+    if (gameState == sleepMode) {
+        // turn down red led
+        digitalWrite(LED_ERRORPIN, LOW);
+        // call the function to turn down the system
+        sleep();
+        // what the system does when wakes up
+        delay(1000);
+        times = 0;
+        enterPreGame();
+    }
     switch (gameState)
     {
     case preGame:
@@ -147,7 +157,18 @@ void loop()
             gameState = outGame;
         }
         break;
+    case sleepMode:
+        // turn down red led
+        digitalWrite(LED_ERRORPIN, LOW);
+        // call the function to turn down the system
+        sleep();
+        // what the system does when wakes up
+        delay(1000);
+        times = 0;
+        enterPreGame();
+        break;
     default:
+        Serial.println("exception");
         break;
     }
 }
@@ -286,6 +307,8 @@ void startGame()
  */
 void enterPreGame()
 {
+    times = 0;
+    gameState = preGame;
     disableInterrupt(BUTTON_PIN1);
     enableInterrupt(BUTTON_PIN1, startGame, CHANGE);
     Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
@@ -310,11 +333,8 @@ void goToSleep()
         enableInterrupt(BUTTON_PIN2, wakeUp, RISING);
         enableInterrupt(BUTTON_PIN3, wakeUp, RISING);
         enableInterrupt(BUTTON_PIN4, wakeUp, RISING);
-        Serial.println("vado in sleep");
-        sleep();
-        times = 0;
-        Serial.println
-        enterPreGame();
+        gameState = sleepMode;
+        stopTimer();
     }
     else
     {
