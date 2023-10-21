@@ -38,6 +38,7 @@ int turnedOffLed;
 int fadeAmount;
 int brightness;
 int times;
+String output;
 
 volatile enum gameState {
     preGame,
@@ -120,7 +121,7 @@ void loop()
         gameState = inGame;
         break;
     case endGame:
-        String output = "Game Over. Final Score: " + (String)score + " ";
+        output = "Game Over. Final Score: " + (String)score + " ";
         Serial.println(output);
         score = 0;
         t2 = T2;
@@ -150,7 +151,7 @@ void loop()
                 // reduce games timers
                 t2 = t2 - t2 * factor;
                 t3 = t3 - t3 * factor;
-                String output = "New point! Score: " + (String)score + " ";
+                output = "New point! Score: " + (String)score + " ";
                 Serial.println(output);
             }
             // change state
@@ -291,14 +292,8 @@ void startGame()
     restartTime(5 * microsecondMultiplier, goToSleep);
     prevoiusTime = millis();
     digitalWrite(LED_ERRORPIN, LOW);
-    disableInterrupt(BUTTON_PIN1);
-    disableInterrupt(BUTTON_PIN2);
-    disableInterrupt(BUTTON_PIN3);
-    disableInterrupt(BUTTON_PIN4);
-    enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
-    enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
-    enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
-    enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
+    disableAllInterrupts();
+    enableAllInGameInterrupts(); 
     gameState = outGame;
 }
 
@@ -309,7 +304,7 @@ void enterPreGame()
 {
     times = 0;
     gameState = preGame;
-    disableInterrupt(BUTTON_PIN1);
+    disableAllInterrupts();
     enableInterrupt(BUTTON_PIN1, startGame, CHANGE);
     Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
     // set timer to deepSleep
@@ -325,14 +320,8 @@ void goToSleep()
     if (times == 2)
     {
         // attacca gli interrupt per svegliare e vai a dormire
-        disableInterrupt(BUTTON_PIN1);
-        disableInterrupt(BUTTON_PIN2);
-        disableInterrupt(BUTTON_PIN3);
-        disableInterrupt(BUTTON_PIN4);
-        enableInterrupt(BUTTON_PIN1, wakeUp, RISING);
-        enableInterrupt(BUTTON_PIN2, wakeUp, RISING);
-        enableInterrupt(BUTTON_PIN3, wakeUp, RISING);
-        enableInterrupt(BUTTON_PIN4, wakeUp, RISING);
+        disableAllInterrupts();
+        enableAllWakeUpInterrupts();
         gameState = sleepMode;
         stopTimer();
     }
@@ -341,4 +330,28 @@ void goToSleep()
         stopTimer();
         Timer1setPeriod(goToSleep, 5 * microsecondMultiplier);
     }
+}
+
+void disableAllInterrupts()
+{
+    disableInterrupt(BUTTON_PIN1);
+    disableInterrupt(BUTTON_PIN2);
+    disableInterrupt(BUTTON_PIN3);
+    disableInterrupt(BUTTON_PIN4);
+}
+
+void enableAllInGameInterrupts()
+{
+    enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
+    enableInterrupt(BUTTON_PIN2, button2pressed, CHANGE);
+    enableInterrupt(BUTTON_PIN3, button3pressed, CHANGE);
+    enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
+}
+
+void enableAllWakeUpInterrupts()
+{
+    enableInterrupt(BUTTON_PIN1, wakeUp, RISING);
+    enableInterrupt(BUTTON_PIN2, wakeUp, RISING);
+    enableInterrupt(BUTTON_PIN3, wakeUp, RISING);
+    enableInterrupt(BUTTON_PIN4, wakeUp, RISING);
 }
