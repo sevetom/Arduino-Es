@@ -87,16 +87,6 @@ void setup()
 
 void loop()
 {
-    if (gameState == sleepMode) {
-        // turn down red led
-        digitalWrite(LED_ERRORPIN, LOW);
-        // call the function to turn down the system
-        sleep();
-        // what the system does when wakes up
-        delay(1000);
-        times = 0;
-        enterPreGame();
-    }
     switch (gameState)
     {
     case preGame:
@@ -116,7 +106,7 @@ void loop()
         turnOffLeds();
         // start timer
         Serial.println("Go!");
-        Timer1setPeriod(goToEndGame, t3 * 1000000);
+        //Timer1setPeriod(goToEndGame, t3 * 1000000);
         // change state
         gameState = inGame;
         break;
@@ -141,6 +131,7 @@ void loop()
         // check array lenght by checking if last element is equal 0
         if (pressedOrder[3] != 0)
         {
+            Serial.println("entrato");
             // stop the timer
             stopTimer();
             // check pressed button order
@@ -289,7 +280,9 @@ void goToEndGame()
  */
 void startGame()
 {
-    restartTime(5 * microsecondMultiplier, goToSleep);
+    stopTimer();
+    //ho commentato il restartTime perché altrimenti entra in inGame con il timer di sleep che ancora andava
+    //restartTime(5 * microsecondMultiplier, goToSleep);
     prevoiusTime = millis();
     digitalWrite(LED_ERRORPIN, LOW);
     disableAllInterrupts();
