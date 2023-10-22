@@ -230,13 +230,11 @@
     volatile int currentTurn;
     // Used to maintain the current time to avoid buttons bouncing
     volatile long prevts;
-    // Used to maintain the time in which the timer started
-    volatile long timerSet;
     buttonLed buttonLedArr[COUPLES];
-    float score;
-    float difficulty;
+    volatile float score;
+    volatile float difficulty;
     // Used to maintain the potentiometer value
-    float potVal;
+    volatile float potVal;
     // Used to maintain the brightness of the red led
     int brightness;
     // Used to maintain the amount of light the red led is shifting
