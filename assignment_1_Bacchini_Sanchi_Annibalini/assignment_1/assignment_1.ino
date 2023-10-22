@@ -20,7 +20,6 @@
 #define POT_PIN A0
 #define N_LED 4
 #define FIXAMOUNT 300
-#define T1 1
 #define T2 4
 #define T3 5
 
@@ -30,6 +29,7 @@ int *turnedOffOrder = (int[]){0, 0, 0, 0};
 int *pressedOrder = (int[]){0, 0, 0, 0};
 int pos;
 float factor;
+float t1;
 float t2;
 float t3;
 unsigned long milliSecondsMultiplier;
@@ -105,7 +105,8 @@ void loop()
         digitalWrite(LED_PIN3, HIGH);
         digitalWrite(LED_PIN4, HIGH);
         // wait 1 second to starting turning off leds
-        delay(T1 * milliSecondsMultiplier);
+        t1 = random(500, 2000)/1000;
+        delay(t1 * milliSecondsMultiplier);
         turnOffLeds();
         // start timer
         Serial.println("Go!");
