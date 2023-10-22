@@ -13,6 +13,7 @@ void setup() {
     score = 0;
     prevts = 0;
     difficulty = MIN_DIFF;
+    timer = timer_create_default();
     srand(micros());
     generateTimes();
     buttonLedArr[0] = { BUTTON1, GREENLED1, UNDEFINED };
@@ -24,8 +25,8 @@ void setup() {
         pinMode(buttonLedArr[i].ledPin, OUTPUT);
     }
     pinMode(REDLED, OUTPUT);
-    timerOneInit();
     Serial.begin(9600);
+    Serial.println("USANDO TIMER_");
 }
 
 void loop() {
@@ -40,6 +41,7 @@ void loop() {
             startTurningOffLeds();
             break;
         case waitingPlayer:
+            timer.tick();
             break;
         case madeMistake:
             restart();
@@ -67,35 +69,9 @@ void disableButtonsInterrupt() {
     }
 }
 
-void timerOneInit() {
-    noInterrupts();
-    Timer1.initialize();
-    Timer1.stop();
-    interrupts();
-}
-
-void setTimerOne(unsigned long time, void (*f)()) {
-    noInterrupts();
-    Timer1.attachInterrupt(f, time);
-    interrupts();
-    timerSet = millis();
-}
-
-void stopTimerOne() {
-    noInterrupts();
-    Timer1.stop();
-    Timer1.detachInterrupt();
-    interrupts();
-}
-
-void restartTimerOne(unsigned long time, void (*f)()) {
-    stopTimerOne();
-    setTimerOne(time, f);
-}
-
 bool avoidButtonsBouncing() {
     long ts = millis();
-    if (ts - prevts > 100) {
+    if (ts - prevts > BUTTONS_BOUNCING) {
         prevts = ts;
         return true;
     }
@@ -106,29 +82,29 @@ void setupStart() {
     potVal = map(analogRead(POTENTIOMETER), POT_MIN, POT_MAX, MIN_DIFF, MAX_DIFF);
     brightness = 0;
     fadeAmount = FADE;
-    Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
+    Serial.println("Welcome 2 to the Restore the Light Game. Press Key B1 to Start");
     enableInterrupt(buttonLedArr[0].buttonPin, startGame, RISING);
-    setTimerOne(SLEEP_TIME, checkSleepTime);
+    timer.in(SLEEP_TIME, powerDown);
+    Serial.print("Set up timer sleep at: ");
+    Serial.println(millis());
     state = starting;
 }
 
 void waitingStart() {
+    timer.tick();
     float tmp = analogRead(POTENTIOMETER);
     float tmpPotVal = map(tmp, POT_MIN, POT_MAX, MIN_DIFF, MAX_DIFF);
     if (potVal != tmpPotVal) {
-        restartTimerOne(SLEEP_TIME, checkSleepTime);
-        Serial.print("Difficulty changed: ");
-        Serial.print(tmpPotVal);
-        Serial.print(" | With potentiometer: ");
-        Serial.println(tmp);
         potVal = tmpPotVal;
+        timer.cancel();
+        timer.in(SLEEP_TIME, powerDown);
     }
     analogWrite(REDLED, brightness);
     brightness = brightness + fadeAmount;
     if (brightness == 0 || brightness == 255) {
         fadeAmount = -fadeAmount;
     }
-    delay(30);
+    delay(FADE_PERIOD);
 }
 
 void startGame() {
@@ -141,8 +117,11 @@ void startGame() {
     }
 }
 
-void timeOut() {
+bool timeOutGuess(void* arg) {
+    Serial.print("TIMER MISTAKE: ");
+    Serial.println(millis());
     setConcurrentState(madeMistake);
+    return false;
 }
 
 void restart() {
@@ -150,6 +129,7 @@ void restart() {
     Serial.println(score);
     disableButtonsInterrupt();
     switchOff();
+    timer.cancel();
     generateTimes();
     digitalWrite(REDLED, HIGH);
     delay(DELAY);
@@ -169,12 +149,15 @@ void startTurningOffLeds() {
         buttonLedArr[arr[i]].turn = i;
     }
     currentTurn = COUPLES-1;
-    restartTimerOne(times[2] * 1000, timeOut);
+    timer.in(times[2], timeOutGuess);
+    Serial.print("Set up timer at: ");
+    Serial.println(millis());
     enableButtonsInterrupt(buttonPressed);
     state = waitingPlayer;
 }
 
 void setupTurningOffLeds(int* arr) {
+    timer.cancel();
     difficulty = 1 - (potVal/10);
     reduceTimes();
     switchGreens(true);
@@ -232,7 +215,6 @@ void switchGreens(bool state) {
 void switchOff() {
     switchGreens(false);
     digitalWrite(REDLED, LOW);
-    stopTimerOne();
     Serial.flush();
 }
 
@@ -273,7 +255,9 @@ void reduceTimes() {
     }
 }
 
-void sleep() {
+bool powerDown(void* arg) {
+    Serial.print("TIMER SLEEP: ");
+    Serial.println(millis());
     Serial.println("GOING TO POWER DOWN IN 1 SECOND...");
     delay(DELAY);
     switchOff();
@@ -285,15 +269,7 @@ void sleep() {
     sleep_disable();
     disableButtonsInterrupt();
     Serial.flush();
-}
-
-void checkSleepTime() {
-    long timePassed = (millis() - timerSet) * 1000;
-    if (timePassed < SLEEP_TIME) {
-        restartTimerOne(SLEEP_TIME - timePassed, sleep);
-    } else {
-        sleep();
-    }
+    return false;
 }
 
 void wakeUp() {

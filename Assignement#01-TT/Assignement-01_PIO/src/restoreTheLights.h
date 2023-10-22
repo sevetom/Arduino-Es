@@ -8,8 +8,8 @@
     #include <time.h>
     // Enables all pins to handle interrupts
     #include <EnableInterrupt.h>
-    // Needed to use Timer1
-    #include <TimerOne.h>
+    // Needed to use Timer
+    #include <arduino-timer.h>
     // Needed to put arduino to sleep
     #include <avr/sleep.h>
 
@@ -37,15 +37,15 @@
     // Maximum time given for an action (milliseconds)
     #define MAX_TIME 3000
     // The difference in time from one action to the next (milliseconds)
-    #define TIME_INCREASE 2000
+    #define TIME_INCREASE 3000
     // Quantity for how much the led shifts in light while fading
     #define FADE 5
     // Simbolic for variables waiting to have a valid number assigned
     #define UNDEFINED -1
     // Frequently used value when waiting (milliseconds)
     #define DELAY 1000
-    // Time before going to sleep (microseconds)
-    #define SLEEP_TIME 10 * 1000000
+    // Time before going to sleep (milliseconds)
+    #define SLEEP_TIME 10 * 1000
     // Time before getting another try (milliseconds)
     #define MISTAKE_TIME 10 * 1000
     /* This are not standard potentiometer values but
@@ -55,6 +55,10 @@
     // Levels of difficulty of the game
     #define MIN_DIFF 1
     #define MAX_DIFF 4
+    // Used to avoid buttons bouncing (milliseconds)
+    #define BUTTONS_BOUNCING 100
+    // Used to set a period for the led feading (milliseconds)
+    #define FADE_PERIOD 30
 
     /**
      * This struct couples all the buttons with their respective leds. 
@@ -114,23 +118,6 @@
     void disableButtonsInterrupt();
 
     /**
-     * Initializes the timer one.
-    */
-    void timerOneInit();
-
-    /**
-     * Sets the timer one to call the function f after time microseconds.
-     * @param time the time in microseconds.
-     * @param f the function to be called.
-    */
-    void setTimerOne(unsigned long time, void (*f)());
-
-    /**
-     * Stops the timer one.
-    */
-    void stopTimerOne();
-
-    /**
      * Checks if enough time has passed since the last button press.
     */
     bool avoidButtonsBouncing();
@@ -153,7 +140,7 @@
     /**
      * Handles the time out of the time given to player.
     */
-    void timeOut();
+    bool timeOutGuess(void* arg);
 
     /**
      * Handles the resetting of the game.
@@ -230,22 +217,12 @@
     /**
      * Gets the arduino to sleep.
     */
-    void sleep();
-
-    /**
-     * Checks if the time the timer was set to has passsed before sleeping.
-    */
-    void checkSleepTime();
+    bool powerDown(void* arg);
 
     /**
      * Wakes up the arduino.
     */
     void wakeUp();
-
-    /**
-     * TODO
-    */
-    void restartTimerOne(unsigned long time, void (*f)());
 
     // The state the game is currently in
     volatile gameState state;
@@ -264,4 +241,6 @@
     int brightness;
     // Used to maintain the amount of light the red led is shifting
     int fadeAmount;
+    // Timer handler
+    Timer<> timer;
 #endif
