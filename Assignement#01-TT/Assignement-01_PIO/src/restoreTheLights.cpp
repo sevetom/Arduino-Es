@@ -26,7 +26,6 @@ void setup() {
     }
     pinMode(REDLED, OUTPUT);
     Serial.begin(9600);
-    Serial.println("USANDO TIMER_");
 }
 
 void loop() {
@@ -82,11 +81,9 @@ void setupStart() {
     potVal = map(analogRead(POTENTIOMETER), POT_MIN, POT_MAX, MIN_DIFF, MAX_DIFF);
     brightness = 0;
     fadeAmount = FADE;
-    Serial.println("Welcome 2 to the Restore the Light Game. Press Key B1 to Start");
+    Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
     enableInterrupt(buttonLedArr[0].buttonPin, startGame, RISING);
     timer.in(SLEEP_TIME, powerDown);
-    Serial.print("Set up timer sleep at: ");
-    Serial.println(millis());
     state = starting;
 }
 
@@ -118,8 +115,6 @@ void startGame() {
 }
 
 bool timeOutGuess(void* arg) {
-    Serial.print("TIMER MISTAKE: ");
-    Serial.println(millis());
     setConcurrentState(madeMistake);
     return false;
 }
@@ -150,8 +145,6 @@ void startTurningOffLeds() {
     }
     currentTurn = COUPLES-1;
     timer.in(times[2], timeOutGuess);
-    Serial.print("Set up timer at: ");
-    Serial.println(millis());
     enableButtonsInterrupt(buttonPressed);
     state = waitingPlayer;
 }
@@ -185,7 +178,6 @@ void buttonPressed() {
                     correctGuess(i);
                 } else {
                     state = madeMistake;
-                    Serial.println("Mistake!");
                 }
                 break;
             }
@@ -246,19 +238,10 @@ void generateTimes() {
 void reduceTimes() {
     for (int i = 1; i < TIMERS; i++) {
         times[i] *= difficulty;
-        Serial.print("Time ");
-        Serial.print(i);
-        Serial.print(": ");
-        Serial.print(times[i]);
-        Serial.print(" | Difficulty: ");
-        Serial.println(difficulty);
     }
 }
 
 bool powerDown(void* arg) {
-    Serial.print("TIMER SLEEP: ");
-    Serial.println(millis());
-    Serial.println("GOING TO POWER DOWN IN 1 SECOND...");
     delay(DELAY);
     switchOff();
     setConcurrentState(sleeping);
@@ -274,7 +257,6 @@ bool powerDown(void* arg) {
 
 void wakeUp() {
     if (avoidButtonsBouncing()) {
-        Serial.println("WAKING UP...");
         state = settingUp;
     }
 }
