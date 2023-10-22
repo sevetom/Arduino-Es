@@ -40,6 +40,7 @@ void loop() {
             startTurningOffLeds();
             break;
         case waitingPlayer:
+            timer.tick();
             break;
         case madeMistake:
             restart();
@@ -83,6 +84,8 @@ void setupStart() {
     Serial.println("Welcome to the Restore the Light Game. Press Key B1 to Start");
     enableInterrupt(buttonLedArr[0].buttonPin, startGame, RISING);
     timer.in(SLEEP_TIME, powerDown);
+    Serial.print("Set up timer at: ");
+    Serial.println(millis());
     state = starting;
 }
 
@@ -112,6 +115,8 @@ void startGame() {
 }
 
 bool timeOutGuess(void* arg) {
+    Serial.print("TIMER MISTAKE: ");
+    Serial.println(millis());
     setConcurrentState(madeMistake);
     return false;
 }
@@ -141,6 +146,8 @@ void startTurningOffLeds() {
     }
     currentTurn = COUPLES-1;
     timer.in(times[2], timeOutGuess);
+    Serial.print("Set up timer at: ");
+    Serial.println(millis());
     enableButtonsInterrupt(buttonPressed);
     state = waitingPlayer;
 }
@@ -244,6 +251,8 @@ void reduceTimes() {
 }
 
 bool powerDown(void* arg) {
+    Serial.print("TIMER SLEEP: ");
+    Serial.println(millis());
     Serial.println("GOING TO POWER DOWN IN 1 SECOND...");
     delay(DELAY);
     switchOff();
