@@ -24,6 +24,7 @@
 #define T2 4
 #define T3 5
 
+unsigned long tempo;
 int score;
 int *turnedOffOrder = (int[]){0, 0, 0, 0};
 int *pressedOrder = (int[]){0, 0, 0, 0};
@@ -108,7 +109,8 @@ void loop()
         turnOffLeds();
         // start timer
         Serial.println("Go!");
-        //Timer1setPeriod(goToEndGame, t3 * 1000000);
+        Timer1setPeriod(goToEndGame, t3 * 1000000);
+        tempo = millis();
         // change state
         gameState = inGame;
         break;
@@ -272,6 +274,8 @@ void dissolvenzaStatusLed()
  */
 void goToEndGame()
 {
+    output = "tempo = " + (String)(millis() - tempo) + " ";
+    Serial.println(output);
     gameState = endGame;
     pos = 0;
 }

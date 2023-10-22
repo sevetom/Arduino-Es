@@ -11,6 +11,7 @@ void Timer1Initialize()
 void Timer1setPeriod(void (*isr)(), unsigned long microseconds)
 {
     noInterrupts();
+    Timer1.start();
     Timer1.attachInterrupt(isr, microseconds);
     interrupts();
 }
