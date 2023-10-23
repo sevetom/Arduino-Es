@@ -24,6 +24,7 @@
 #define T3 5
 
 unsigned long tempo;
+int potValue;
 int score;
 int *turnedOffOrder = (int[]){0, 0, 0, 0};
 int *pressedOrder = (int[]){0, 0, 0, 0};
@@ -69,7 +70,7 @@ void setup()
     t3 = T3;
     prevoiusTime = 0;
     turnedOffLed = 0;
-    factor = 0.2;
+    factor = 0.1;
     brightness = 0;
     fadeAmount = 5;
     times = 0;
@@ -144,8 +145,8 @@ void loop()
             {
                 score++;
                 // reduce games timers
-                t2 = t2 - (t2 * factor);
-                t3 = t3 - (t3 * factor);
+                t2 = t2 - (t2 * (factor * potValue));
+                t3 = t3 - (t3 * (factor * potValue));
                 output = "New point! Score: " + (String)score + " ";
                 Serial.println(output);        
                 // change state
@@ -293,6 +294,14 @@ void startGame()
     digitalWrite(LED_ERRORPIN, LOW);
     disableAllInterrupts();
     enableAllInGameInterrupts(); 
+    potValue = analogRead(POT_PIN);
+    //println a solo scopo di test
+    output = "pot value: " + (String)potValue + " ";
+    Serial.println(output);
+    potValue = map(potValue, 1, 1021, 1, 4);
+    //println a solo scopo di test
+    output = "pot value: " + (String)potValue + " ";
+    Serial.println(output);
     gameState = outGame;
 }
 
