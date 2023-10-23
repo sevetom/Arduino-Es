@@ -93,7 +93,7 @@ void loop()
     {
     case preGame:
         // led red start blinking
-        dissolvenzaStatusLed();
+        fadingLed();
         break;
     case outGame:
         flushArray(turnedOffOrder);
@@ -260,7 +260,10 @@ void insertButton(int n)
     }
 }
 
-void dissolvenzaStatusLed()
+/**
+ * Function to manage the fade of the red led
+*/
+void fadingLed()
 {
     analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
     brightness = brightness + fadeAmount;
