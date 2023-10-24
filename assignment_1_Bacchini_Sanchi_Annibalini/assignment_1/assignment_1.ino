@@ -23,7 +23,6 @@
 #define T2 4
 #define T3 5
 
-unsigned long tempo;
 int potValue;
 int score;
 int *turnedOffOrder = (int[]){0, 0, 0, 0};
@@ -96,27 +95,26 @@ void loop()
         fadingLed();
         break;
     case outGame:
+        switchAllLed(LOW);
         flushArray(turnedOffOrder);
         flushArray(pressedOrder);
         // randomize order of leds' turning off
         randomizeOrder(turnedOffOrder);
         // turning on all leds
-        digitalWrite(LED_PIN1, HIGH);
-        digitalWrite(LED_PIN2, HIGH);
-        digitalWrite(LED_PIN3, HIGH);
-        digitalWrite(LED_PIN4, HIGH);
+        switchAllLed(HIGH);
         // wait 1 second to starting turning off leds
         t1 = random(500, 2000)/1000;
         delay(t1 * milliSecondsMultiplier);
         turnOffLeds();
         // start timer
         Serial.println("Go!");
+        enableAllInGameInterrupts();
         Timer1setPeriod(goToEndGame, t3 * 1000000);
-        tempo = millis();
         // change state
         gameState = inGame;
         break;
     case endGame:
+        switchAllLed(LOW);
         output = "Game Over. Final Score: " + (String)score + " ";
         Serial.println(output);
         score = 0;
@@ -137,6 +135,8 @@ void loop()
         // check array lenght by checking if last element is equal 0
         if (pressedOrder[3] != 0)
         {
+            //disable all interrupts to prevent accidental button press
+            disableAllInterrupts();
             // stop the timer
             stopTimer();
             // check pressed button order
@@ -194,7 +194,10 @@ void turnOffLeds()
             digitalWrite(LED_PIN4, LOW);
             break;
         }
-        delay((t2 / N_LED) * 1000);
+        if(i != 3)
+        {
+            delay((t2 / N_LED) * 1000);
+        }
     }
 }
 
@@ -218,6 +221,7 @@ void checkPressOrder()
  */
 void button1pressed()
 {
+    digitalWrite(LED_PIN1, HIGH);
     insertButton(1);
 }
 
@@ -226,6 +230,7 @@ void button1pressed()
  */
 void button2pressed()
 {
+    digitalWrite(LED_PIN2, HIGH);
     insertButton(2);
 }
 
@@ -234,6 +239,7 @@ void button2pressed()
  */
 void button3pressed()
 {
+    digitalWrite(LED_PIN3, HIGH);
     insertButton(3);
 }
 
@@ -242,6 +248,7 @@ void button3pressed()
  */
 void button4pressed()
 {
+    digitalWrite(LED_PIN4, HIGH);
     insertButton(4);
 }
 
@@ -254,7 +261,6 @@ void insertButton(int n)
     if (millis() - prevoiusTime > FIXAMOUNT)
     {
         pressedOrder[pos] = n;
-        Serial.println(pressedOrder[pos]);
         prevoiusTime = millis();
         pos++;
     }
@@ -279,8 +285,6 @@ void fadingLed()
  */
 void goToEndGame()
 {
-    output = "tempo = " + (String)(millis() - tempo) + " ";
-    Serial.println(output);
     gameState = endGame;
     pos = 0;
 }
@@ -295,16 +299,9 @@ void startGame()
     //restartTime(5 * microsecondMultiplier, goToSleep);
     prevoiusTime = millis();
     digitalWrite(LED_ERRORPIN, LOW);
-    disableAllInterrupts();
-    enableAllInGameInterrupts(); 
+    disableAllInterrupts(); 
     potValue = analogRead(POT_PIN);
-    //println a solo scopo di test
-    output = "pot value: " + (String)potValue + " ";
-    Serial.println(output);
     potValue = map(potValue, 1, 1021, 1, 4);
-    //println a solo scopo di test
-    output = "pot value: " + (String)potValue + " ";
-    Serial.println(output);
     gameState = outGame;
 }
 
@@ -343,6 +340,21 @@ void goToSleep()
     }
 }
 
+/**
+ * Function to turn on and off all leds
+ * @param state: 1 to turn on, 0 to turn off
+*/
+void switchAllLed(int state){
+    digitalWrite(LED_PIN1, state);
+    digitalWrite(LED_PIN2, state);
+    digitalWrite(LED_PIN3, state);
+    digitalWrite(LED_PIN4, state);
+}
+
+/**
+ * Function to disable all interrupts 
+ * attached to buttons
+*/
 void disableAllInterrupts()
 {
     disableInterrupt(BUTTON_PIN1);
@@ -351,6 +363,10 @@ void disableAllInterrupts()
     disableInterrupt(BUTTON_PIN4);
 }
 
+/**
+ * Function to enable all interrupts
+ * attached to buttons for inGame gamestate
+*/
 void enableAllInGameInterrupts()
 {
     enableInterrupt(BUTTON_PIN1, button1pressed, CHANGE);
@@ -359,6 +375,10 @@ void enableAllInGameInterrupts()
     enableInterrupt(BUTTON_PIN4, button4pressed, CHANGE);
 }
 
+/**
+ * Function to enable all interrupts
+ * attached to buttons for wakeUp function
+*/
 void enableAllWakeUpInterrupts()
 {
     enableInterrupt(BUTTON_PIN1, wakeUp, RISING);
