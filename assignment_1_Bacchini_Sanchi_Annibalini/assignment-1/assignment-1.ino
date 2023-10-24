@@ -103,7 +103,7 @@ void loop()
         // turning on all leds
         switchAllLed(HIGH);
         // wait 1 second to starting turning off leds
-        t1 = random(500, 2000)/1000;
+        t1 = random(1000, 2000)/1000;
         delay(t1 * milliSecondsMultiplier);
         turnOffLeds();
         // start timer
@@ -114,6 +114,7 @@ void loop()
         gameState = inGame;
         break;
     case endGame:
+        disableAllInterrupts();
         switchAllLed(LOW);
         output = "Game Over. Final Score: " + (String)score + " ";
         Serial.println(output);
@@ -121,8 +122,10 @@ void loop()
         t2 = T2;
         t3 = T3;
         stopTimer();
-        // delay 10 seconds with red led
+        // delay 10
         digitalWrite(LED_ERRORPIN, HIGH);
+        delay(1 * milliSecondsMultiplier);
+        digitalWrite(LED_ERRORPIN, LOW);
         delay(10 * milliSecondsMultiplier);
         // change state
         enterPreGame();
@@ -271,7 +274,7 @@ void insertButton(int n)
 */
 void fadingLed()
 {
-    analogWrite(LED_ERRORPIN, brightness); // imposta la luminosità
+    analogWrite(LED_ERRORPIN, brightness); // set the brightness
     brightness = brightness + fadeAmount;
     if (brightness == 0 || brightness == 255)
     {
@@ -295,8 +298,6 @@ void goToEndGame()
 void startGame()
 {
     stopTimer();
-    //ho commentato il restartTime perché altrimenti entra in inGame con il timer di sleep che ancora andava
-    //restartTime(5 * microsecondMultiplier, goToSleep);
     prevoiusTime = millis();
     digitalWrite(LED_ERRORPIN, LOW);
     disableAllInterrupts(); 
@@ -327,7 +328,7 @@ void goToSleep()
     times++;
     if (times == 2)
     {
-        // attacca gli interrupt per svegliare e vai a dormire
+        // disbale all previous interrupts and enable interrupts to wakeUp arduino
         disableAllInterrupts();
         enableAllWakeUpInterrupts();
         gameState = sleepMode;

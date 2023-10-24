@@ -15,11 +15,6 @@ void randomizeOrder(int turnedOffOrder[])
             i++;
         }
     }
-    // print the order on serial line
-    Serial.println(turnedOffOrder[0]);
-    Serial.println(turnedOffOrder[1]);
-    Serial.println(turnedOffOrder[2]);
-    Serial.println(turnedOffOrder[3]);
 }
 
 void flushArray(int *array)
