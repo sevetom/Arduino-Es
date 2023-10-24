@@ -119,6 +119,7 @@
 
     /**
      * Checks if enough time has passed since the last button press.
+     * @return true if enough time has passed, false otherwise.
     */
     bool avoidButtonsBouncing();
 
@@ -139,6 +140,8 @@
 
     /**
      * Handles the time out of the time given to player.
+     * @param arg the argument passed to the function.
+     * @return true if it has to repeat the function, false otherwise.
     */
     bool timeOutGuess(void* arg);
 
@@ -154,12 +157,14 @@
 
     /**
      * Sets up everything needed to turn off the leds in order.
+     * @param arr the array maintaining each led turn.
     */
     void setupTurningOffLeds(int* arr); 
 
     /**
      * Generates a random order for the leds.
      * @param arr the array maintaining each led turn.
+     * @return the index of the first led to be turned on.
     */
     int randomLedOrder(int *arr);
 
@@ -170,6 +175,7 @@
 
     /**
      * Handles the correct guesses of the player.
+     * @param index the index of the button pressed.
     */
     void correctGuess(int index);
 
@@ -188,6 +194,7 @@
      * Generates a random integer between min and max.
      * @param min the minimum value the integer can assume.
      * @param max the maximum value the integer can assume.
+     * @return the random integer generated.
     */
     int randomInt(int min, int max);
 
@@ -195,11 +202,15 @@
      * Generates a random float between min and max.
      * @param min the minimum value the float can assume.
      * @param max the maximum value the float can assume.
+     * @return the random float generated.
     */
     float randomFloat(float min, float max);
 
     /**
      * Checks if a number is present in an array.
+     * @param arr the array to be checked.
+     * @param num the number to be checked.
+     * @return true if the number is present, false otherwise.
     */
     bool isPresent(int *arr, int num);
 
@@ -216,6 +227,8 @@
 
     /**
      * Gets the arduino to sleep.
+     * @param arg the argument passed to the function.
+     * @return true if it has to repeat the function, false otherwise.
     */
     bool powerDown(void* arg);
 
