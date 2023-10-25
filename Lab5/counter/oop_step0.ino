@@ -2,7 +2,7 @@ class Counter {
 
 private:
 
-  int count;  
+  int count;
 
 public:
 
@@ -11,11 +11,11 @@ public:
   }
 
   ~Counter(){
-    // destructor  
+    // destructor
   }
   
   void inc(){
-    count++;  
+    count++;
   }
   
   int getValue(){
@@ -35,7 +35,7 @@ void setup(){
    int x2 = 4;
    Counter c(10);
 
-   Serial.begin(9600); 
+   Serial.begin(9600);
    c1 = new Counter(20);
    c3 = new Counter(30);
 
