@@ -17,6 +17,6 @@ public class DashboardController {
     }
 
     public void start() {
-        // Implementazione del controller
+        
     }
 }

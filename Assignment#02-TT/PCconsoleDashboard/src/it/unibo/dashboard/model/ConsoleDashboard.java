@@ -21,6 +21,6 @@ public class ConsoleDashboard extends JFrame {
     }
 
     public void updateDashboard(WashData washData) {
-        // Implementazione dell'aggiornamento della dashboard
+        
     }
 }
