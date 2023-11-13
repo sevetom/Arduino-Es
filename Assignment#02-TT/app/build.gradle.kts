@@ -26,7 +26,7 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass.set("unibo.it.Dashboard")
+    mainClass.set("it.unibo.dashboard.Dashboard")
 }
 
 tasks.named<Test>("test") {
