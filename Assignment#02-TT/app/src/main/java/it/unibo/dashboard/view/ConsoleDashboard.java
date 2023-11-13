@@ -1,4 +1,3 @@
-// ConsoleDashboard.java
 package it.unibo.dashboard.view;
 
 import it.unibo.dashboard.controller.DashboardController;
@@ -18,12 +17,16 @@ public class ConsoleDashboard extends JFrame {
 
     private JPanel panel;
     private DashboardController controller;
+    private JTextField carWashedField;
+    private JTextField temperatureField;
+    private JTextField statusField;
+    private JButton maintenanceButton;
 
     public ConsoleDashboard(DashboardController controller) {
         super("Dashboard");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int width = (int) (screenSize.width * 1.0 / 3.0);
+        int width = (int) (screenSize.width * 3.0 / 7.0);
         int height = (int) (screenSize.height * 1.0 / 6.0);
         this.setSize(width, height);
         this.setLocationRelativeTo(null);
@@ -38,31 +41,45 @@ public class ConsoleDashboard extends JFrame {
     // nel panel devono essere presenti 3 box in alto allineati al centro e sotto un bottone, le informazioni le prende dal controller
     private void createMainPanel() {
         panel.setLayout(new BorderLayout());
-        createMonitor("Car Washed:", BorderLayout.WEST);
-        createMonitor("Temperature:", BorderLayout.EAST);
-        createMonitor("Status:" , BorderLayout.CENTER);
-        createStartButton();
+        carWashedField = createMonitor("Car Washed:", BorderLayout.WEST);
+        temperatureField = createMonitor("Temperature:", BorderLayout.EAST);
+        statusField = createMonitor("Status:" , BorderLayout.CENTER);
+        statusField.setColumns(20);
+        createMaintenanceButton();
     }
 
     public void start() {
         this.setVisible(true);
     }
 
-    private void createMonitor(String text, String place) {
-        JPanel monitorPanel = new JPanel();
-        JLabel monitorLabel = new JLabel(text);
-        JTextField monitorField = new JTextField(5);
-        monitorField.setEnabled (false);
-        monitorPanel.add(monitorLabel);
-        monitorPanel.add(monitorField);
-        panel.add(monitorPanel, place);
+    private JTextField createMonitor(String text, String placement) {
+        JPanel monitor = new JPanel();
+        JLabel label = new JLabel(text);
+        JTextField field = new JTextField(5);
+        field.setEnabled(false);
+        monitor.add(label);
+        monitor.add(field);
+        panel.add(monitor, placement);
+        return field;
     }
 
-    private void createStartButton() {
-        JButton button = new JButton("Start");
-        button.addActionListener(e -> {
-            System.out.println("Start");
+    private void createMaintenanceButton() {
+        maintenanceButton = new JButton("Maintenance done");
+        maintenanceButton.addActionListener(e -> {
+            System.out.println("Maintenance done");
         });
-        panel.add(button, BorderLayout.SOUTH);
+        panel.add(maintenanceButton, BorderLayout.SOUTH);
+        maintenanceButton.setEnabled(false);
+    }
+
+    public void updateValues(int carWashed, int temperature, boolean status) {
+        carWashedField.setText(String.valueOf(carWashed));
+        temperatureField.setText(String.valueOf(temperature)+"°C");
+        maintenanceButton.setEnabled(!status);
+        if (status) {
+            statusField.setText("All good");
+        } else {
+            statusField.setText("Maintenance required");
+        }
     }
 }

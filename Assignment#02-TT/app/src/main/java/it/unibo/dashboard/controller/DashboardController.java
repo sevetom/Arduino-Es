@@ -1,4 +1,3 @@
-// DashboardController.java
 package it.unibo.dashboard.controller;
 
 import it.unibo.dashboard.model.WashData;
