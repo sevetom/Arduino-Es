@@ -8,7 +8,7 @@ public class DashboardController {
     private ConsoleDashboard dashboard;
     private WashData washData;
 
-    public DashboardController(ConsoleDashboard dashboard, WashData washData) {
+    public DashboardController(WashData washData) {
         this.dashboard = dashboard;
         this.washData = washData;
     }

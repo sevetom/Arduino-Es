@@ -6,8 +6,9 @@ import it.unibo.dashboard.view.ConsoleDashboard;
 
 public final class Dashboard {
     public static void main(String[] args) {
-        ConsoleDashboard dashboardView = new ConsoleDashboard();
         WashData washData = new WashData();
-        DashboardController controller = new DashboardController(dashboardView, washData);
+        DashboardController controller = new DashboardController(washData);
+        ConsoleDashboard dashboardView = new ConsoleDashboard(controller);
+        dashboardView.start();
     }
 }
