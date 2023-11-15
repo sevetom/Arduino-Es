@@ -22,13 +22,14 @@ dependencies {
 
     // This dependency is used by the application.
     implementation("com.google.guava:guava:31.1-jre")
-    // This dependency is JSSC library for serial communication
+
+    // This dependency is used to communicate with the Arduino.
     implementation("io.github.java-native:jssc:2.9.5")
 }
 
 application {
     // Define the main class for the application.
-    mainClass.set("testComunication.SimpleSerialMonitor")
+    mainClass.set("it.unibo.dashboard.Dashboard")
 }
 
 tasks.named<Test>("test") {
