@@ -22,6 +22,9 @@ dependencies {
 
     // This dependency is used by the application.
     implementation("com.google.guava:guava:31.1-jre")
+
+    // This dependency is used to communicate with the Arduino.
+    implementation("io.github.java-native:jssc:2.9.5")
 }
 
 application {
