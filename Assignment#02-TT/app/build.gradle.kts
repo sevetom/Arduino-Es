@@ -28,7 +28,7 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass.set("it.unibo.dashboard.Dashboard")
+    mainClass.set("testComunication.SimpleSerialMonitor")
 }
 
 tasks.named<Test>("test") {
