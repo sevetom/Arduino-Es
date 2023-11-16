@@ -7,7 +7,7 @@ class Model:
         self.temperature = 0
     
     def get_status(self):
-        return self.temperature
+        return self.status
     
     def get_car_washed(self):
         return self.car_washed
