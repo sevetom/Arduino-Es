@@ -15,7 +15,7 @@ class View:
         
         self.label_car = tk.Label(self.frame_lable, text="Car Washed\n"+str(self.model.get_car_washed()))
         self.label_status = tk.Label(self.frame_lable, text="Status\n"+str("OK" if self.model.get_status() else "ERROR"), fg="white", bg="gray", borderwidth=5, relief="sunken")
-        self.label_temp = tk.Label(self.frame_lable, text="Temperature\n"+str(self.model.get_temperature()))
+        self.label_temp = tk.Label(self.frame_lable, text="Temperature\n"+str("N/D" if self.model.get_temperature() == 0 else self.model.get_temperature())+"°C")
         
         for label in [self.label_car, self.label_status, self.label_temp]:
             label.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -38,7 +38,7 @@ class View:
     def update_labels(self):
         self.label_car.config(text="Car Washed\n"+str(self.model.get_car_washed()))
         self.label_status.config(text="Status\n"+str("OK" if self.model.get_status() else "ERROR"), fg="white", bg="gray")
-        self.label_temp.config(text="Temperature\n"+str(self.model.get_temperature()))
+        self.label_temp.config(text="Temperature\n"+str("N/D" if self.model.get_temperature() == 0 else self.model.get_temperature())+"°C")
         if not self.model.get_status():
             self.flash_label()
         
@@ -51,7 +51,6 @@ class View:
             self.error_flashing = not self.error_flashing
             self.root.after(self.error_flash_interval, self.flash_label)
         else:
-            # reset label: nessuno sfondo
             self.label_status.config(fg="white", bg="gray")
             
     def on_click(self):
