@@ -1,10 +1,11 @@
 import serial.tools.list_ports
-
+import model as md
 class Controller:
     def __init__(self):
         self.serialInst = serial.Serial()
         self.portsList = []
         self.portVar = None
+        self.model = md.Model()
 
     def select_port(self):
         ports = serial.tools.list_ports.comports()
@@ -31,5 +32,14 @@ class Controller:
             if self.serialInst.in_waiting:
                 packet = self.serialInst.readline()
                 print(packet.decode('utf').rstrip('\n'))
+                data = packet.decode('utf').rstrip('\n').split("|")
+                # 1: car_washed - 2: status - 3: temperature
+                if len(data) == 3:
+                    self.model.set_car_washed(data[0])
+                    self.model.set_status(data[1])
+                    self.model.set_temperature(data[2])
+                else:
+                    print("Invalid Packet")
+                
       
     
