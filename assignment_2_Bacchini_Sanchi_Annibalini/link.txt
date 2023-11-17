@@ -1,1 +1,2 @@
-https://www.tinkercad.com/things/iO9Rh6A5brf-daring-jaiks-kieran/editel?sharecode=OJbOKaoQAuvFueleLNS_ViGg7N3Xq7S2gxvWpsTL-QU
+tinkercad: https://www.tinkercad.com/things/iO9Rh6A5brf-daring-jaiks-kieran/editel?sharecode=OJbOKaoQAuvFueleLNS_ViGg7N3Xq7S2gxvWpsTL-QU
+lucidchart: https://lucid.app/lucidchart/7e8c3eb4-308c-4cee-bdc3-e514a4350649/edit?page=0_0&invitationId=inv_514dcec9-9933-4a1b-b428-1311f986f70c#
