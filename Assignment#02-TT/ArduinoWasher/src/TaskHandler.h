@@ -1,14 +1,25 @@
 #ifndef __TASK_HANDLER__
 #define __TASK_HANDLER__
 
-#include <EnableInterrupt.h>
+#include <Arduino.h>
 #include "Task.h"
 
 class TaskHandler {
+
+protected:
+  Task** tasksHandled;
+
 public:
-    virtual void init();
-    Task** getTasks();
-    virtual void toggleEndCondition(bool state, interruptFunctionType function);
+  virtual void initTasks() {
+    tasksHandled = new Task*[0];
+  };
+  virtual Task** getTasks() {
+    return tasksHandled;
+  };
+  virtual int getInterruptPin() {
+    return 0;
+  };
+  virtual void afterInterrupt() = 0;
 };
 
 #endif

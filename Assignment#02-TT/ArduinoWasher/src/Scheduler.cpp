@@ -26,10 +26,15 @@ bool Scheduler::addTask(Task* task){
   }
 }
 
-void Scheduler::emptyTasks(){
+void Scheduler::removeTasks(Task** tasks){
+  int j = 0;
   for (int i = 0; i < nTasks; i++){
-    free(taskList[i]);
-    taskList[i] = NULL;
+    if (taskList[i] == tasks[j]){
+      free(taskList[i]);
+      taskList[i] = NULL;
+      j++;
+      if (j == nTasks) break;
+    }
   }
 }
   
