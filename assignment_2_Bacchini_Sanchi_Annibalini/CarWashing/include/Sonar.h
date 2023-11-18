@@ -2,11 +2,11 @@
 #define __SONAR__
 class Sonar {
     public:
-        Sonar(int pinIN, int pinOUT, float velocitaSuono);
+        Sonar(int echoPinIn, int trigPinOut, float velocitaSuono);
         float getDistance();
     protected:
-        int pinIn;
-        int pinOut;
+        int echoPinIn;
+        int trigPinOut;
         float velocitaSuono; 
 };
 #endif
