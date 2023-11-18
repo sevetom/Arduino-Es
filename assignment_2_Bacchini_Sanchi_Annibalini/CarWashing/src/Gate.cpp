@@ -6,7 +6,7 @@
 Gate::Gate(int pin) {
     this->pin = pin;
     pinMode(pin, OUTPUT);
-    //Di default chiuso
+    //Di default chiuso --- ATTENZIONE NON SONO SICURO CHE SIA GIUSTO
     digitalWrite(pin, LOW);
     state = false;
 }
@@ -21,6 +21,7 @@ void Gate::setOpen() {
     state = true;
 }
 
+//ATTENZIONE NON SONO SICURO CHE SIA GIUSTO
 void Gate::setClose() {
     digitalWrite(pin, LOW);
     state = false;
