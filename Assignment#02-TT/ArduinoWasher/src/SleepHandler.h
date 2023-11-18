@@ -1,6 +1,7 @@
 #ifndef __SLEEP_HANDLER__
 #define __SLEEP_HANDLER__
 
+#include <Arduino.h>
 #include "TaskHandler.h"
 #include "SleepTask.h"
 

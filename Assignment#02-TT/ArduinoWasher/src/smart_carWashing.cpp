@@ -21,7 +21,7 @@ void insertTasks(Task** list);
 
 Scheduler sched;
 TaskHandler* taskHandlers[TASK_HANDLERS];
-int currentHandler = 0;
+int currentHandler;
 
 void setup() {
 	Serial.begin(9600);
@@ -37,6 +37,7 @@ void setup() {
   for (int i = 0; i < TASK_HANDLERS; i++){
     taskHandlers[i]->initTasks();
   }
+  currentHandler = 0;
   enableInterrupt(taskHandlers[currentHandler]->getInterruptPin(), changeTasks, CHANGE);
   insertTasks(taskHandlers[currentHandler]->getTasks());
 	sched.init(50);
@@ -50,7 +51,7 @@ void changeTasks() {
   sched.removeTasks(taskHandlers[currentHandler]->getTasks());
   taskHandlers[currentHandler]->afterInterrupt();
 	disableInterrupt(taskHandlers[currentHandler]->getInterruptPin());
-  currentHandler = currentHandler >= TASK_HANDLERS ? 0 : currentHandler++;
+  currentHandler = currentHandler >= TASK_HANDLERS ? 0 : currentHandler+1;
   enableInterrupt(taskHandlers[currentHandler]->getInterruptPin(), changeTasks, CHANGE);
   insertTasks(taskHandlers[currentHandler]->getTasks());
 }

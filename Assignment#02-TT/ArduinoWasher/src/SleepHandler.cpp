@@ -2,7 +2,7 @@
 
 SleepTask* sleep;
 
-void TaskHandler::initTasks(){
+void SleepHandler::initTasks(){
   pinMode(PHOTORES_PIN, INPUT);
   sleep = new SleepTask();
   tasksHandled[0] = sleep;
