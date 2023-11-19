@@ -1,5 +1,9 @@
 #ifndef __GATE__
 #define __GATE__
+
+#include <Arduino.h>
+#include <Servo.h>
+
 class Gate {
     public:
         Gate(int pin);
@@ -9,5 +13,6 @@ class Gate {
     protected:
         int pin;
         bool state;
+        Servo servo;
 };
 #endif
