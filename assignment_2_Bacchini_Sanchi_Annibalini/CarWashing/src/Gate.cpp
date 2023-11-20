@@ -1,18 +1,20 @@
 #include "include/Gate.h"
 
-Gate::Gate(int pin) {
+Gate::Gate(int pin,int open,int close) {
     this->pin = pin;
+    this->open = open;
+    this->close = close;
     this->state = false;
-    servo.attach(pin);
+    this->servo.attach(pin);
 }
 
 void Gate::setOpen() {
-    servo.write(180);
+    this->servo.write(this->open);
     this->state = true;
 }
 
 void Gate::setClose() {
-    servo.write(0);
+    this->servo.write(this->close);
     this->state = false;
 }
 
