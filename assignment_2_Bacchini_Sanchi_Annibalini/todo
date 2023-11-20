@@ -1,11 +1,11 @@
 electronics classes:
-  -led
-  -lcd monitor
-  -distance sensor
-  -button
-  -temperature sensor
-  -servomotor
-  -presence sensor
+  -led 			DONE
+  -lcd monitor		DONE
+  -distance sensor	DONE
+  -button		DONE
+  -temperature sensor	DONE
+  -servomotor		DONE
+  -presence sensor	DONE
 
 gui with python:
   -input for com port
